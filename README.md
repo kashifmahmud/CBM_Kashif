@@ -17,6 +17,6 @@ iii) other R scripts to perform different portions of the analysis and are linke
 
 All necessary raw data files that are called in the R scripts are stored in "rawdata" folder for easy access.
 
-The "outcome" folder holds all the results (including figures, processed data tables) produced from the CBM MCMC anlysis. 
+The "output" folder holds all the results (including figures, processed data tables) produced from the CBM MCMC anlysis. 
 
 All the functions used in the R project are stored in the "Rfunctions" folder.
