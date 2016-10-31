@@ -2,9 +2,9 @@
 # Developed by Kashif Mahmud and Belinda Medlyn (October 2016)
 # k.mahmud@westernsydney.edu.au
 
-# R code to import and process data, and then model the carbon pools and fluxes
+# R script to import and process the raw HIE pot experiment data to model the carbon pools and fluxes using MCMC
 rm(list=ls())
-setwd("/Users/kashifmahmud/WSU/ARC_project/CBM/Data_files")
+setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/rawdata")
 
 # Calculate Cleaf pool
 # inputs:

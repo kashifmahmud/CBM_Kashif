@@ -3,7 +3,7 @@
 # k.mahmud@westernsydney.edu.au
 
 rm(list=ls())
-setwd("/Users/kashifmahmud/WSU/ARC_project/CBM/Data_files")
+setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/rawdata")
 
 ##### TNC partitioning to tree organs (without considering organ biomass)
 # data file is downloaded from "https://hiev.uws.edu.au/data_files/99499" -
