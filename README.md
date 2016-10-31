@@ -13,7 +13,7 @@ i) a R project "CBM_Kashif.Rproj" to perform MCMC with a carbon balance model (C
 ii) a R script "MCMC_CBM_analysis.R" to perform MCMC with a carbon balance model (CBM). 
 iii) other R scripts to perform different portions of the analysis and are linked with the main script "MCMC_CBM_analysis.R".
 
-"Instruction_files" provides a brief instructions to describe the Carbon Balance Model (CBM) structure, associated equations and the steps the R scripts are performing to process the necessary data. Another instruction file describes the MCMC parameter settings and the synthetic data generation.
+"CBM_instructions" provides a brief instructions to describe the Carbon Balance Model (CBM) structure, associated equations and the steps the R scripts are performing to process the necessary data. This also describes the MCMC parameter settings.
 
 All necessary raw data files that are called in the R scripts are stored in "rawdata" folder for easy access.
 
