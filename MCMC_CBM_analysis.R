@@ -2,8 +2,8 @@
 # Developed by Kashif Mahmud and Belinda Medlyn (November 2016)
 # k.mahmud@westernsydney.edu.au
 
-# This code carries out Bayesian calibration for 4 variables (allocation fractions: "k","af","as","sf") on 
-# daily time scale (e.g. 120 days) to estimate Carbon pools (Cstorage,Cleaf,Cstem,Croot)
+# This code carries out Bayesian calibration for 5 variables (allocation fractions: "k","Y",af","as","sf") on 
+# various temporal scales (e.g. 1,2,...,120 days) to estimate Carbon pools (Cstorage,Cleaf,Cstem,Croot) and fluxes
 
 ##############################
 # Version = v15: MCMC with soil manipulation pot experiment data for all treatments (including the free seedling), 
@@ -23,14 +23,15 @@ source("MCMC_CBM_load.R")
 source("MCMC_CBM_readdata.R")
 
 # Assign inputs for MCMC
-chainLength = 1500 # Setting the length of the Markov Chain to be generated
+chainLength = 10500 # Setting the length of the Markov Chain to be generated
+bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
-vol = c(1000) # test run
+# vol = c(35,1000) # test run
 no.param.par.var = c(3) # test run
-# GPP.data.raw = read.csv("GPP.csv") # Units gC d-1
-# vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))]
+GPP.data.raw = read.csv("GPP.csv") # Units gC d-1
+vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
 
 param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol)))
@@ -151,7 +152,7 @@ for (z in 1:length(no.param.par.var)) {
       pChain[c,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,pValues$sf,logL0)
     }
     # Discard the first 500 iterations for Burn-IN in MCMC
-    pChain <- pChain[501:nrow(pChain),]
+    pChain <- pChain[(bunr_in+1):nrow(pChain),]
     
     # Store the final parameter set values
     param.set = colMeans(pChain[ , 1:(no.param*no.var)])
@@ -224,7 +225,7 @@ for (z in 1:length(no.param.par.var)) {
       annotate("text", x = melted.output$Date[20], y = max(output$Mstem,na.rm = TRUE), size = 3, 
                           label = paste("Mean k = ", round(mean(param.final[,1]), 3), "\nMean Y = ", round(mean(param.final[,2]), 3),
                                         "\nMean af = ", round(mean(param.final[,3]), 3), "\nMean as = ", round(mean(param.final[,4]), 3),
-                                        "\nMean ar = ", round(mean(param.final[,7]), 3), "\nMean sf = ",round(mean(param.final[,5]), 3), "\nChain length = ", chainLength-500))
+                                        "\nMean ar = ", round(mean(param.final[,7]), 3), "\nMean sf = ",round(mean(param.final[,5]), 3), "\nChain length = ", chainLength-bunr_in))
     p1
     ggsave(p1,filename=paste("output/figures/Measured_vs_Modelled_Carbon_pools_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
     
@@ -268,29 +269,29 @@ for (z in 1:length(no.param.par.var)) {
     
     # Display the Acceptance rate of the chain
     nAccepted = length(unique(pChain[,1]))
-    acceptance = (paste("Volume =",vol[v],", Total Parameter number =",no.param.par.var[z],": ", nAccepted, "out of ", chainLength, "candidates accepted ( = ",
+    acceptance = (paste("Volume =",vol[v],", Total Parameter number =",no.param.par.var[z],": ", nAccepted, "out of ", chainLength-bunr_in, "candidates accepted ( = ",
                         round(100*nAccepted/chainLength), "%)"))
     print(acceptance)
     
     
-    # Plotting all parameter time series seperately with a moving average for the overall trend
-    ma <- function(x,n=5){filter(x,rep(1/n,n), sides=2)}
-    n = 10
-    png(file = paste("output/figures/Parameters_vol_",vol[v],"_par_",no.param.par.var[z], ".png", sep = ""))
-    par(mfrow=c(2,3))
-    plot(param.final$k,type='p',col="red",main="Utilization coefficient, k",xlab="Days")
-    # lines(ma(param.final$k,n),type='l',col="black")
-    plot(param.final$Y,type='p',col="chocolate",main="Allocation fraction to Biomass, Y",xlab="Days")
-    # lines(ma(param.final$Y,n),type='l',col="black")
-    plot(param.final$af,type='p',col="green",main="Allocation fraction to foliage, af",xlab="Days")
-    # lines(ma(param.final$af,n),type='l',col="black")
-    plot(param.final$as,type='p',col="blue",main="Allocation fraction to stem, as",xlab="Days")
-    # lines(ma(param.final$as,n),type='l',col="black")
-    plot(param.final$ar,type='p',col="magenta",main="Allocation fraction to root, ar",xlab="Days")
-    # lines(ma(param.final$ar,n),type='l',col="black")
-    plot(param.final$sf,type='p',col="purple",main="Foliage tunrover rate, sf",xlab="Days")
-    # lines(ma(param.final$sf,n),type='l',col="black")
-    dev.off()
+    # # Plotting all parameter time series seperately with a moving average for the overall trend
+    # ma <- function(x,n=5){filter(x,rep(1/n,n), sides=2)}
+    # n = 10
+    # png(file = paste("output/figures/Parameters_vol_",vol[v],"_par_",no.param.par.var[z], ".png", sep = ""))
+    # par(mfrow=c(2,3))
+    # plot(param.final$k,type='p',col="red",main="Utilization coefficient, k",xlab="Days")
+    # # lines(ma(param.final$k,n),type='l',col="black")
+    # plot(param.final$Y,type='p',col="chocolate",main="Allocation fraction to Biomass, Y",xlab="Days")
+    # # lines(ma(param.final$Y,n),type='l',col="black")
+    # plot(param.final$af,type='p',col="green",main="Allocation fraction to foliage, af",xlab="Days")
+    # # lines(ma(param.final$af,n),type='l',col="black")
+    # plot(param.final$as,type='p',col="blue",main="Allocation fraction to stem, as",xlab="Days")
+    # # lines(ma(param.final$as,n),type='l',col="black")
+    # plot(param.final$ar,type='p',col="magenta",main="Allocation fraction to root, ar",xlab="Days")
+    # # lines(ma(param.final$ar,n),type='l',col="black")
+    # plot(param.final$sf,type='p',col="purple",main="Foliage tunrover rate, sf",xlab="Days")
+    # # lines(ma(param.final$sf,n),type='l',col="black")
+    # dev.off()
     
     
     # Plotting all parameter whole iterations for Day 1 only to check the convergance
