@@ -4,7 +4,6 @@
 
 # This script cleans the workspace, loads necessary Rfunctions and packages
 ##############################
-
 rm(list=ls()) # Cleaning the workspace
 
 # Load the function to define the CBM equations to iteratively calculate Cstorage, Cleaf, Cstem, Croot, Sleaf, Sstem, Sroot
@@ -15,6 +14,12 @@ source("Rfunctions/logLikelihood.R")
 
 # Load packages
 # install.packages("mvtnorm")
-library(mvtnorm) # Creates candidate parameter vector as a multivariate normal jump away from the current candidate
-library(reshape2)
-library(ggplot2)
+library("mvtnorm") # Creates candidate parameter vector as a multivariate normal jump away from the current candidate
+library("reshape2")
+library("ggplot2")
+library("lubridate")
+library("rio")
+library("dplyr")
+library("zoo")
+library("doBy")
+library("corrplot")

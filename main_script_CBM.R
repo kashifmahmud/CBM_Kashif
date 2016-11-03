@@ -3,10 +3,10 @@
 # k.mahmud@westernsydney.edu.au
 
 # This code carries out Bayesian calibration for 5 variables (allocation fractions: "k","Y",af","as","sf") on 
-# various temporal scales (e.g. 1,2,...,120 days) to estimate Carbon pools (Cstorage,Cleaf,Cstem,Croot) and fluxes
+# various temporal scales (e.g. 1,2,...,121 days) to estimate Carbon pools (Cstorage,Cleaf,Cstem,Croot) and fluxes
 
 ##############################
-# Version = v15: MCMC with soil manipulation pot experiment data for all treatments (including the free seedling), 
+# MCMC with soil manipulation pot experiment data for all treatments (including the free seedling), 
 # This version considers either daily/weekly/monthly/just one parameter set for 5 variables ("k","Y","af","as","sf")
 # So we can set the parameters for various time frames
 # Also calculates the MCMC SDs for all parameters with different time frames, and also the LogLi, AIC, BIC, time (measures 
@@ -17,10 +17,13 @@
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif")
 
 # This script cleans the workspace, loads necessary Rfunctions and packages
-source("MCMC_CBM_load.R")
+source("load_packages_functions_CBM.R")
+
+# This script imports and processes the raw HIE pot experiment data to model the carbon pools and fluxes using MCMC
+source("initial_data_processing.R")
 
 # This sript reads the Pot experiment raw data
-source("MCMC_CBM_readdata.R")
+source("read_data_CBM.R")
 
 # Assign inputs for MCMC
 chainLength = 10500 # Setting the length of the Markov Chain to be generated
@@ -28,7 +31,7 @@ bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
-# vol = c(35,1000) # test run
+# vol = c(5) # test run
 no.param.par.var = c(3) # test run
 GPP.data.raw = read.csv("GPP.csv") # Units gC d-1
 vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
@@ -47,7 +50,7 @@ q = 0 # Indicates the iteration number
 for (z in 1:length(no.param.par.var)) {
   for (v in 1:length(vol)) {
     # This script process the raw data
-    source("MCMC_CBM_processdata.R")
+    source("data_processing_CBM.R")
     
     
     # Initialize few output data files
@@ -171,6 +174,16 @@ for (z in 1:length(no.param.par.var)) {
     param.final$as_SD = param.SD[(1+3*no.param):(4*no.param)]
     param.final$sf_SD = param.SD[(1+4*no.param):(5*no.param)]
     param.final$ar_SD = with(param.final, (af_SD*af_SD + as_SD*as_SD)^0.5)
+    
+    
+    # Find the correlation matrix between parameter set
+    corrMatrix = cor(param.final[,c("k","Y","af","as","ar","sf")])
+    postscript(file = paste("output/figures/corrMatrix_vol_",vol[v],"_par_",no.param.par.var[z],".eps",sep=""), height=8, width=8, paper="special",
+               family="Helvetica", fonts="Helvetica", horizontal=FALSE, onefile=FALSE)
+    corrplot(corrMatrix,tl.cex=1.5,title="Correlation Matrix", method="circle", is.corr=FALSE,type="full", cl.cex=2, 
+             addgrid.col="blue",addshade="positive", addCoef.col = rgb(0,0,0), mar=c(0,0,1,0), diag= FALSE)
+    dev.off()
+
     
     # Calculate final output set from the predicted parameter set
     Mleaf = Mstem = Mroot = c()
@@ -339,6 +352,6 @@ melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 
 
 # This script creates the figures and saves those
-source("MCMC_CBM_figures.R")
+source("generate_figures_CBM.R")
 
 

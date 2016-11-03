@@ -6,7 +6,7 @@
 # various temporal scales to estimate seedling Carbon pools (Cleaf,Cstem,Croot,Cstorage)
 ##############################
 
-# Import daily GPP, daily Rd
+# Import daily GPP, daily Rd data
 GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
 Rd.data.raw = read.csv("rawdata/Rd.csv") # Units g C g-1 plant d-1
 tnc.data.raw = read.csv("rawdata/tnc_fortnightly_data.csv") # Units g plant-1
