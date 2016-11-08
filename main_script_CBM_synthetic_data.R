@@ -6,10 +6,10 @@
 # various temporal scales (e.g. 1,2,...,121 days) to estimate Carbon pools (Cstorage,Cleaf,Cstem,Croot) and fluxes
 
 ##############################
-# MCMC with soil manipulation pot experiment data for all treatments (including the free seedling), 
-# This version considers either daily/weekly/monthly/just one parameter set for 5 variables ("k","Y","af","as","sf")
-# So we can set the parameters for various time frames
-# Also calculates the MCMC SDs for all parameters with different time frames, and also the LogLi, AIC, BIC, time (measures 
+# MCMC applied on Carbon balance model (CBM) with a very synthetic data set for an individual tree seedling, 
+# This version considers the simplest scenario; just one parameter set for 5 variables ("k","Y","af","as","sf")
+# So the parameters do not vary over time (the duration of the synthetic data is 121 days)
+# Also calculates the MCMC SDs for all parameters, and also the LogLi, AIC, BIC, time (measures 
 # for best model selection) to select the best parameter set
 # Finally save the figures in Github/results folder
 ##############################
@@ -19,23 +19,15 @@ setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif")
 # This script cleans the workspace, loads necessary Rfunctions and packages
 source("load_packages_functions_CBM.R")
 
-# # This script imports and processes the raw HIE pot experiment data to model the carbon pools and fluxes using MCMC
-# source("initial_data_processing.R")
-
-# This sript reads the Pot experiment raw data
-source("read_data_CBM.R")
-
 # Assign inputs for MCMC
-chainLength = 1500 # Setting the length of the Markov Chain to be generated
+chainLength = 10500 # Setting the length of the Markov Chain to be generated
 bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
-vol = c(1000) # test run
-no.param.par.var = c(3) # test run
-# GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
-# vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
-# no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
+vol = c("Synthetic Case") # Synthetic Case test run
+no.param.par.var = 1 # test run
+# no.param.par.var = c(1,2,3,9) # temporal parameter count per variable
 
 param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol)))
 names(param.mean) = c("k","Y","af","as","ar","sf")
@@ -46,13 +38,11 @@ time = data.frame(no.param=rep(no.param.par.var,length(vol)),
                   time.taken=numeric(length(no.param.par.var)*length(vol)))
 q = 0 # Indicates the iteration number
 
+# Generate synthetic data for Cleaf,Cstem,Croot,Sleaf with Mean and SD
+source("generate_synthetic_data.R")
 
 for (z in 1:length(no.param.par.var)) {
   for (v in 1:length(vol)) {
-    # This script process the raw data
-    source("data_processing_CBM.R")
-    
-    
     # Initialize few output data files
     q = q + 1
     time$start.time[q] <- Sys.time()
@@ -61,14 +51,14 @@ for (z in 1:length(no.param.par.var)) {
     j = c()
     j[1] = 0
     i = seq(1,nrow(data),1)
-    j[i] = i - ceiling(i/param.vary)*1  # j is for parameter settings for various time frames
+    j[i] = i - ceiling(i/param.vary)  # j is for parameter settings for various time frames
     
     
     # Setting lower and upper bounds of the prior parameter pdf, and starting point of the chain
-    param.k <- matrix(c(0,0.45,1) , nrow=no.param, ncol=3, byrow=T) 
+    param.k <- matrix(c(0,0.5,1) , nrow=no.param, ncol=3, byrow=T) 
     param.Y <- matrix(c(0.25,0.3,0.35) , nrow=no.param, ncol=3, byrow=T) 
-    param.af <- matrix(c(0,0.45,0.7) , nrow=no.param, ncol=3, byrow=T) 
-    param.as <- matrix(c(0,0.2,0.5) , nrow=no.param, ncol=3, byrow=T) 
+    param.as <- matrix(c(0,0.33,1) , nrow=no.param, ncol=3, byrow=T) 
+    param.af <- matrix(c(0,0.33,1) , nrow=no.param, ncol=3, byrow=T) 
     param.sf <- matrix(c(0,0.05,0.1) , nrow=no.param, ncol=3, byrow=T) 
     
     param = data.frame(param.k,param.Y,param.af,param.as,param.sf)
@@ -212,15 +202,6 @@ for (z in 1:length(no.param.par.var)) {
     param.final$ar_SD = with(param.final, (af_SD*af_SD + as_SD*as_SD)^0.5)
     
     
-    # # Find the correlation matrix between parameter set
-    # corrMatrix = cor(param.final[,c("k","Y","af","as","ar","sf")])
-    # postscript(file = paste("output/figures/corrMatrix_vol_",vol[v],"_par_",no.param.par.var[z],".eps",sep=""), height=8, width=8, paper="special",
-    #            family="Helvetica", fonts="Helvetica", horizontal=FALSE, onefile=FALSE)
-    # corrplot(corrMatrix,tl.cex=1.5,title="Correlation Matrix", method="circle", is.corr=FALSE,type="full", cl.cex=2, 
-    #          addgrid.col="blue",addshade="positive", addCoef.col = rgb(0,0,0), mar=c(0,0,1,0), diag= FALSE)
-    # dev.off()
-    
-    
     # Calculate final output set from the predicted parameter set
     Mleaf = Mstem = Mroot = c()
     Mleaf[1] <- data$Mleaf[1]
@@ -274,16 +255,16 @@ for (z in 1:length(no.param.par.var)) {
       annotate("text", x = melted.output$Date[20], y = max(output$Mstem,na.rm = TRUE), size = 3, 
                label = paste("Mean k = ", round(mean(param.final[,1]), 3), "\nMean Y = ", round(mean(param.final[,2]), 3),
                              "\nMean af = ", round(mean(param.final[,3]), 3), "\nMean as = ", round(mean(param.final[,4]), 3),
-                             "\nMean ar = ", round(mean(param.final[,7]), 3), "\nMean sf = ",round(mean(param.final[,5]), 3), "\nChain length = ", chainLength-bunr_in))
+                             "\nMean ar = ", round(mean(param.final[,5]), 3), "\nMean sf = ",round(mean(param.final[,6]), 3), "\nChain length = ", chainLength-bunr_in))
     p1
     ggsave(p1,filename=paste("output/figures/Cpools/Measured_vs_Modelled_Carbon_pools_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
     
     
     # Plotting Allocation fractions over time for individual volume and No. of parameter
-    pd <- position_dodge(3) # move the overlapped errorbars horizontally
+    pd <- position_dodge(0.1) # move the overlapped errorbars horizontally
     p2 = ggplot(data = melted.param, aes(x = Date, y = Parameter, group = variable, colour=factor(variable))) +
       geom_line(position=pd) +
-      geom_errorbar(data = melted.param, aes(ymin=Parameter-Parameter_SD, ymax=Parameter+Parameter_SD), width=5, position=pd) +
+      geom_errorbar(data = melted.param, aes(ymin=Parameter-Parameter_SD, ymax=Parameter+Parameter_SD), width=0.03, position=pd) +
       geom_point(position=pd, size=1.5, shape=21, stroke=1.25, fill="white") + # 21 is filled circle
       xlab("Days") +
       ylab("Parameters") +
@@ -291,7 +272,6 @@ for (z in 1:length(no.param.par.var)) {
       ggtitle(paste("Modelled allocation fractions_vol_",vol[v],"_par_",no.param.par.var[z])) +
       scale_colour_hue(name="Parameter",    # Legend label, use darker colors
                        l=40) +                    # Use darker colors, lightness=40
-      # scale_y_continuous(breaks=0:10*0.1)  # Set tick every 0.1
     theme_bw() +
       theme(legend.justification=c(1,1),
             legend.position=c(1,1)) # Position legend in bottom right
@@ -323,26 +303,6 @@ for (z in 1:length(no.param.par.var)) {
     acceptance = (paste("Volume =",vol[v],", Total Parameter number =",no.param.par.var[z],": ", nAccepted, "out of ", chainLength-bunr_in, "candidates accepted ( = ",
                         round(100*nAccepted/chainLength), "%)"))
     print(acceptance)
-    
-    
-    # # Plotting all parameter time series seperately with a moving average for the overall trend
-    # ma <- function(x,n=5){filter(x,rep(1/n,n), sides=2)}
-    # n = 10
-    # png(file = paste("output/figures/Parameters_vol_",vol[v],"_par_",no.param.par.var[z], ".png", sep = ""))
-    # par(mfrow=c(2,3))
-    # plot(param.final$k,type='p',col="red",main="Utilization coefficient, k",xlab="Days")
-    # # lines(ma(param.final$k,n),type='l',col="black")
-    # plot(param.final$Y,type='p',col="chocolate",main="Allocation fraction to Biomass, Y",xlab="Days")
-    # # lines(ma(param.final$Y,n),type='l',col="black")
-    # plot(param.final$af,type='p',col="green",main="Allocation fraction to foliage, af",xlab="Days")
-    # # lines(ma(param.final$af,n),type='l',col="black")
-    # plot(param.final$as,type='p',col="blue",main="Allocation fraction to stem, as",xlab="Days")
-    # # lines(ma(param.final$as,n),type='l',col="black")
-    # plot(param.final$ar,type='p',col="magenta",main="Allocation fraction to root, ar",xlab="Days")
-    # # lines(ma(param.final$ar,n),type='l',col="black")
-    # plot(param.final$sf,type='p',col="purple",main="Foliage tunrover rate, sf",xlab="Days")
-    # # lines(ma(param.final$sf,n),type='l',col="black")
-    # dev.off()
     
     
     # Plotting all parameter whole iterations for Day 1 only to check the convergance
@@ -390,40 +350,7 @@ melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 
 
 # This script creates the figures and saves those
-source("generate_figures_CBM.R")
-# 
-# 
-# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")
-# plots1 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-#   img <- as.raster(readPNG(x))
-#   rasterGrob(img, interpolate = FALSE)
-# })
-# ggsave("corrMatrix_multipage.pdf", marrangeGrob(grobs=plots1,nrow=2,ncol=length(no.param.par.var)))
-# 
-# 
-# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/AF")
-# plots2 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-#   img <- as.raster(readPNG(x))
-#   rasterGrob(img, interpolate = FALSE)
-# })
-# ggsave("AF_multipage.pdf", marrangeGrob(grobs=plots2,nrow=2,ncol=length(no.param.par.var)))
-# 
-# 
-# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Cpools")
-# plots3 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-#   img <- as.raster(readPNG(x))
-#   rasterGrob(img, interpolate = FALSE)
-# })
-# ggsave("Cpools_multipage.pdf", marrangeGrob(grobs=plots3,nrow=2,ncol=length(no.param.par.var)))
-# 
-# 
-# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Parameter_iterations")
-# plots4 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-#   img <- as.raster(readPNG(x))
-#   rasterGrob(img, interpolate = FALSE)
-# })
-# ggsave("Parameter_iterations_multipage.pdf", marrangeGrob(grobs=plots4,nrow=2,ncol=length(no.param.par.var)))
-
+source("generate_figures_CBM_synthetic_case.R")
 
 
 

@@ -12,6 +12,12 @@ source("Rfunctions/CBM_model.R")
 # Load the function to calcualte LogLi to find the most accurate model
 source("Rfunctions/logLikelihood.R")
 
+# Load the function to calcualte LogLi to find the most accurate model
+source("Rfunctions/multiplot.R")
+
+# Load the function to calcualte LogLi to find the most accurate model
+source("Rfunctions/rnorm2.R")
+
 # Load packages
 # install.packages("mvtnorm")
 library("mvtnorm") # Creates candidate parameter vector as a multivariate normal jump away from the current candidate
@@ -23,3 +29,6 @@ library("dplyr")
 library("zoo")
 library("doBy")
 library("corrplot")
+library("png")
+library("grid")
+library(gridExtra)

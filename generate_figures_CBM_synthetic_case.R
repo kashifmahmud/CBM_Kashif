@@ -77,14 +77,23 @@ ggsave(p5,filename=paste("Cstorage_Modelled.png",sep=""))
 
 
 # Plot modelled parameter means ("k","Y","af","as","ar","sf") against "volume" and "Total No of param"
-melted.param.mean = melt(param.mean, id.vars=c("no.param","volume"))
+param.data = as.data.frame(t(param.data))
+names(param.data) = c("k","Y","af","as","ar","sf")
+param.data$volume = as.factor("Synthetic Case")
+param.data$no.param = as.factor(1)
+param.data$type = as.factor("true")
+
+param.mean$type = as.factor("modelled")
+param.mean = rbind(param.mean,param.data)
+melted.param.mean = melt(param.mean, id.vars=c("no.param","volume","type"))
+
 pd <- position_dodge(0.3)
-p6 = ggplot(data = melted.param.mean, aes(x = variable, y = value, group = interaction(volume,no.param), shape=factor(no.param), colour=factor(volume))) +
+p6 = ggplot(data = melted.param.mean, aes(x = variable, y = value, group = interaction(volume,no.param,type), shape=factor(no.param), colour=factor(type), fill=factor(volume))) +
   geom_point(position=pd, size=4) +
   xlab("Allocation fractions") +
   ylab("Value of the coefficients") +
   ggtitle("Modelled mean allocation fractions") +
-  labs(colour="Soil Volume", shape="Total No of Parameter") +
+  labs(shape="Total No of Parameter", colour="Type", fill="Soil Volume") +
   theme(legend.title = element_text(colour="chocolate", size=10, face="bold"))
 p6
 ggsave(p6,filename=paste("Modelled_mean_allocation_fractions.png"))
