@@ -9,8 +9,7 @@
 # MCMC applied on Carbon balance model (CBM) with a very synthetic data set for an individual tree seedling, 
 # This version considers the simplest scenario; just one parameter set for 5 variables ("k","Y","af","as","sf")
 # So the parameters do not vary over time (the duration of the synthetic data is 121 days)
-# Also calculates the MCMC SDs for all parameters, and also the LogLi, AIC, BIC, time (measures 
-# for best model selection) to select the best parameter set
+# Also calculates the MCMC SDs, LogLi, AIC, BIC, time (measures for best model selection)
 # Finally save the figures in Github/results folder
 ##############################
 # Set working directory for saving figures

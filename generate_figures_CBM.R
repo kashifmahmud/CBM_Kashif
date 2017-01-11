@@ -17,15 +17,20 @@ for (p in 1:length(meas)) {
   summary.data.Cpool = subset(summary.data,variable==meas[p])
   summary.output.Cpool = subset(summary.output,variable==res[p])
   summary.error.Cpool = subset(summary.error,variable==error[p])
-  summary.error.Cpool$parameter = summary.data.Cpool$value
-  p3 = ggplot(summary.error.Cpool, aes(x=Date, y=parameter, colour=volume, group=volume)) + 
-    geom_errorbar(aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=3, position=pd) +
+  # summary.error.Cpool$parameter = summary.data.Cpool$value
+  
+  p3 = ggplot(summary.error.Cpool, aes(x=Date, y=parameter, group = volume, colour=volume)) + 
+    geom_point() +
+    geom_errorbar(aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=3) +
     geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,no.param), linetype=no.param, colour=volume)) + 
-    geom_point(position=pd, size=2) +
     ylab(as.character(meas[p])) +
     ggtitle("C pools - Measured (points) vs Modelled (lines)") +
     labs(colour="Soil Volume", linetype="Total No of Parameter", shape="Total No of Parameter") +
-    theme(legend.title = element_text(colour="chocolate", size=10, face="bold"))
+    theme_bw() +
+    theme(plot.title = element_text(size = 12, face = "bold")) +
+    theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+    theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+    theme(axis.title.y = element_text(size = 12, vjust=0.3))
   p3
   ggsave(p3,filename=paste(meas[p],"_Measured_vs_Modelled.png",sep=""))
 }
@@ -33,7 +38,7 @@ plots5 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
   img <- as.raster(readPNG(x))
   rasterGrob(img, interpolate = FALSE)
 })
-ggsave("Summar_Cpools_multipage.pdf", marrangeGrob(grobs=plots5, nrow=2, ncol=2))
+ggsave("Summary_Cpools_multipage.pdf", marrangeGrob(grobs=plots5, nrow=2, ncol=2))
 
 
 # Set working directory for saving figures
@@ -42,24 +47,35 @@ setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary/AF"
 # Plot individual modelled parameters ("k","Y","af","as","ar","sf") against "volume" and "Total No of param"
 var = as.factor(c("k","Y","af","as","ar","sf"))
 for (p in 1:length(var)) {
-  summary.param.set = subset(summary.param,variable==var[p])
-  pd <- position_dodge(0.5) # move the overlapped errorbars horizontally
-  p4 = ggplot() +
-    geom_point(position=pd,data = summary.param.set, aes(x = Date, y = Parameter,  group = interaction(volume,no.param), colour=factor(volume), shape=factor(no.param))) +
-    geom_line(position=pd,data = summary.param.set, aes(x = Date, y = Parameter,  group = interaction(volume,no.param), colour=factor(volume), linetype=factor(no.param))) +
-    xlab("Days") +
-    ylab(as.character(var[p])) +
-    ggtitle("Modelled coefficients") +
-    labs(colour="Soil Volume", linetype="Total No of Parameter", shape="Total No of Parameter") +
-    theme(legend.title = element_text(colour="chocolate", size=10, face="bold"))
-  ggsave(p4,filename=paste(var[p],"_over_time.png",sep=""))
-  p4
+  summary.param.set.limit = subset(summary.param, variable==var[p])
+  for (z in 1:length(no.param.par.var)) {
+    summary.param.set = subset(summary.param, variable==var[p] & no.param==no.param.par.var[z])
+    # summary.error.set = subset(summary.error, variable==var[p] & no.param==no.param.par.var[z])
+    pd <- position_dodge(0.5) # move the overlapped errorbars horizontally
+    p4 = ggplot(data = summary.param.set, aes(x = Date, y = Parameter,  group = volume, colour=factor(volume))) +
+      geom_errorbar(data = summary.param.set, aes(ymin=Parameter-Parameter_SD, ymax=Parameter+Parameter_SD), width=0.5, size=0.1) +
+      geom_point(position=pd,size=0.01) +
+      geom_line(position=pd,data = summary.param.set, aes(x = Date, y = Parameter,  group = volume, colour=factor(volume))) +
+      xlab("Days") +
+      ylab(as.character(var[p])) +
+      ggtitle(paste("Modelled coefficient,",as.character(var[p]),"for parameter",no.param.par.var[z])) +
+      labs(colour="Soil Volume") +
+      # scale_y_continuous(limits = c(param[1,1+(p-1)*3],param[1,3+(p-1)*3])) +
+      scale_y_continuous(limits = c(min(summary.param.set.limit$Parameter)-0.25,max(summary.param.set.limit$Parameter)+0.25)) +
+      theme_bw() +
+      theme(plot.title = element_text(size = 12, face = "bold")) +
+      theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+      theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+      theme(axis.title.y = element_text(size = 12, vjust=0.3))
+    p4
+    ggsave(p4,filename=paste(var[p],"_over_time_par_",z,".png",sep=""))
+  }
 }
 plots6 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
   img <- as.raster(readPNG(x))
   rasterGrob(img, interpolate = FALSE)
 })
-ggsave("Summary_AF_multipage.pdf", marrangeGrob(grobs=plots6, nrow=2, ncol=2))
+ggsave("Summary_AF_multipage.pdf", marrangeGrob(grobs=plots6, nrow=2, ncol=length(no.param.par.var)))
 
 
 # Set working directory for saving figures
@@ -71,23 +87,31 @@ p5 = ggplot() +
   ylab("Cstorage (gC)") +
   ggtitle("Modelled Cstorage") +
   labs(colour="Soil Volume", linetype="Total No of Parameter") +
-  theme(legend.title = element_text(colour="chocolate", size=10, face="bold"))
+  theme_bw() +
+  theme(plot.title = element_text(size = 12, face = "bold")) +
+  theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+  theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+  theme(axis.title.y = element_text(size = 12, vjust=0.3))
 p5
 ggsave(p5,filename=paste("Cstorage_Modelled.png",sep=""))
 
 
-# Plot modelled parameter means ("k","Y","af","as","ar","sf") against "volume" and "Total No of param"
-melted.param.mean = melt(param.mean, id.vars=c("no.param","volume"))
-pd <- position_dodge(0.3)
-p6 = ggplot(data = melted.param.mean, aes(x = variable, y = value, group = interaction(volume,no.param), shape=factor(no.param), colour=factor(volume))) +
-  geom_point(position=pd, size=4) +
-  xlab("Allocation fractions") +
-  ylab("Value of the coefficients") +
-  ggtitle("Modelled mean allocation fractions") +
-  labs(colour="Soil Volume", shape="Total No of Parameter") +
-  theme(legend.title = element_text(colour="chocolate", size=10, face="bold"))
-p6
-ggsave(p6,filename=paste("Modelled_mean_allocation_fractions.png"))
+# # Plot modelled parameter means ("k","Y","af","as","ar","sf") against "volume" and "Total No of param"
+# melted.param.mean = melt(param.mean, id.vars=c("no.param","volume"))
+# pd <- position_dodge(0.3)
+# p6 = ggplot(data = melted.param.mean, aes(x = variable, y = value, group = interaction(volume,no.param), shape=factor(no.param), colour=factor(volume))) +
+#   geom_point(position=pd, size=4) +
+#   xlab("Allocation fractions") +
+#   ylab("Value of the coefficients") +
+#   ggtitle("Modelled mean allocation fractions") +
+#   labs(colour="Soil Volume", shape="Total No of Parameter") +
+#   theme_bw() +
+#   theme(plot.title = element_text(size = 12, face = "bold")) +
+#   theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+#   theme(axis.title.x = element_text(size = 10, vjust=-.2)) +
+#   theme(axis.title.y = element_text(size = 10, vjust=0.3))
+# p6
+# ggsave(p6,filename=paste("Modelled_mean_allocation_fractions.png"))
 
 
 # Plot Model Measures ("logLi","aic","bic","time") against "volume" and "Total No of param"
@@ -98,7 +122,11 @@ p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interact
   ylab("LogLi, AIC, BIC, Time") +
   ggtitle("LogLi, AIC, BIC, Time for various models") +
   labs(colour="Soil Volume", shape="Total No of Parameter") +
-  theme(legend.title = element_text(colour="chocolate", size=10, face="bold"))
+  theme_bw() +
+  theme(plot.title = element_text(size = 12, face = "bold")) +
+  theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+  theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+  theme(axis.title.y = element_text(size = 12, vjust=0.3))
 p7
 ggsave(p7,filename=paste("LogLi_aic_bic_time.png"))
 
@@ -106,7 +134,7 @@ plots7 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
   img <- as.raster(readPNG(x))
   rasterGrob(img, interpolate = FALSE)
 })
-ggsave("Summary_rest_multipage.pdf", marrangeGrob(grobs=plots7, nrow=3, ncol=1))
+ggsave("Summary_rest_multipage.pdf", marrangeGrob(grobs=plots7, nrow=2, ncol=1))
 
 # png("test.png")
 # multiplot(p5, p6, p6, cols=1)

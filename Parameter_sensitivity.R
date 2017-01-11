@@ -87,8 +87,8 @@ leaf.data = data.frame(id.final$leaf_numb, id.final$leaf_area, hd.final$leaf_cou
 names(leaf.data)[1:ncol(leaf.data)] <- c("initial_LC", "initial_LA", "final_LC", "final_LA", "final_LM")
 
 # Initialise the parameter values
-param = data.frame(k = seq(0.2, 0.8, by = 0.15), Y = seq(0.25, 0.35, by = 0.025), af = seq(0.2, 0.8, by = 0.15),
-                   as = seq(0.2, 0.6, by = 0.1), sf = seq(0, 0.1, by = 0.025))
+param = data.frame(k = seq(0.2, 0.8, by = 0.15), Y = seq(0.25, 0.35, by = 0.025), af = seq(0.12, 0.6, by = 0.12),
+                   as = seq(0.1, 0.5, by = 0.1), sf = seq(0, 0.01, by = 0.0025))
 
 
 # Calculating model outputs
@@ -152,7 +152,7 @@ for (p in 1:ncol(param)) {
       Mroot[i] <- Croot[i] + Sroot[i]
       
       # Leaf area (t) = Leaf area (T) * Leaf count (t) / Leaf count (T); t = time, T = time of harvest
-      LA[i] <- leaf.data$final_LA * Mleaf[i] / leaf.data$final_LM
+      LA[i] <- leaf.data$final_LA * Cleaf[i] / leaf.data$final_LM
     }
     output.final = data.frame(Cstorage,Mleaf,Mstem,Mroot,Sleaf)
     
