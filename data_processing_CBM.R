@@ -7,13 +7,13 @@
 ##############################
 
 # Raw data processing for different pot volumes (e.g. 5L, 10L, ....., 1000L)
-GPP.data = subset(GPP.data.raw,volume==vol[v]) # Consider one pot volume at a time to run MCMC on CBM
+GPP.data = subset(GPP.data.raw,(volume %in% vol[v])) # Consider one pot volume at a time to run MCMC on CBM
 names(GPP.data)[3] = "GPP"
-Rd.data = subset(Rd.data.raw,volume==vol[v])
-Sleaf.data = tnc.data = subset(tnc.data.raw,volume==vol[v])
-Mleaf.data = subset(Mleaf.data.raw,volume==vol[v])
-Mstem.data = subset(Mstem.data.raw,volume==vol[v])
-Mroot.data = subset(Mroot.data.raw,volume==vol[v])
+Rd.data = subset(Rd.data.raw,(volume %in% vol[v]))
+Sleaf.data = tnc.data = subset(tnc.data.raw,(volume %in% vol[v]))
+Mleaf.data = subset(Mleaf.data.raw,(volume %in% vol[v]))
+Mstem.data = subset(Mstem.data.raw,(volume %in% vol[v]))
+Mroot.data = subset(Mroot.data.raw,(volume %in% vol[v]))
 
 
 # Merge all GPP, Rd, Cleaf, Cstem, Croot data

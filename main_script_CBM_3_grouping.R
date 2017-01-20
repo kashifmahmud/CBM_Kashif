@@ -29,50 +29,35 @@ source("Rfunctions/CBM_model_1.R")
 source("read_data_CBM.R")
 
 # Assign inputs for MCMC
-chainLength = 1500 # Setting the length of the Markov Chain to be generated
+chainLength = 3500 # Setting the length of the Markov Chain to be generated
 bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
-vol = c(20) # test run
+# vol = c(20) # test run
 no.param.par.var = c(3) # test run
-# GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
-# vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
+GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
+vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
 
-param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol)))
+# Setting up the grouping of similar treatments
+vol_group <- list(c(1,2), c(3,4,5), 6, 7)
+
+param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol_group)))
 names(param.mean) = c("k","Y","af","as","ar","sf")
-aic.bic = data.frame(matrix(ncol = 4, nrow = length(no.param.par.var)*length(vol)))
-time = data.frame(no.param=rep(no.param.par.var,length(vol)),
-                  start.time=numeric(length(no.param.par.var)*length(vol)),
-                  end.time=numeric(length(no.param.par.var)*length(vol)),
-                  time.taken=numeric(length(no.param.par.var)*length(vol)))
+aic.bic = data.frame(matrix(ncol = 7, nrow = length(no.param.par.var)*length(vol_group)))
+names(aic.bic) <- c("logLi","aic","bic","time","volume.group","no.param","volume")
+time = data.frame(no.param=rep(no.param.par.var,length(vol_group)),
+                  start.time=numeric(length(no.param.par.var)*length(vol_group)),
+                  end.time=numeric(length(no.param.par.var)*length(vol_group)),
+                  time.taken=numeric(length(no.param.par.var)*length(vol_group)))
 q = 0 # Indicates the iteration number
 
-# # Setting lower and upper bounds of the prior parameter pdf "sf", and starting point of the chain
-# no.days = length(order(unique(GPP.data.raw$Date)))
-# param.vary = ceiling(no.days/no.param.par.var[length(no.param.par.var)]) # How many days the parameter set remain unchanged (weekly = 7; monthly = 30; just one parameter = nrow(data))
-# no.param = ceiling(no.days/param.vary) # number of parameter set for the whole duration of experiment (121 days)
-# 
-# param.sf <- matrix(c(0,0.005,0.01) , nrow=1, ncol=3, byrow=T)
-# if (no.param > 1) {
-#   param.sf <- rbind(param.sf, c(-(param.sf[3]-param.sf[1])/no.days, 0, (param.sf[3]-param.sf[1])/no.days))
-# }
-# if (no.param > 2) {
-#   param.sf <- rbind(param.sf, c((param.sf[1,1]-param.sf[1,3]-param.sf[2,3]*no.days)/(no.days^2), 0, (param.sf[1,3]-param.sf[1,1]-param.sf[2,1]*no.days)/(no.days^2)))
-# }
-
-# param.sf.mean = data.frame(matrix(ncol = 2, nrow = length(unique(GPP.data.raw$Date))))
-# names(param.sf.mean) = c("Date","sf.mean")
-# param.sf.mean$Date = GPP.data.raw$Date[order(unique(GPP.data.raw$Date))]
-# param.sf.mean$sf.mean = numeric(length(unique(GPP.data.raw$Date)))
-
-# param.sf.mean = read.csv("output/processeddata/param.sf.mean.csv") # Read the mean sf values
-
-# z=1; v=1
-for (v in 1:length(vol)) {
+# z=1; v1=1
+for (v1 in 1:length(vol_group)) {
   for (z in 1:length(no.param.par.var)) {
     # for (v in 1:length(vol)) {
+    v = unlist(vol_group[v1])
     # This script process the raw data
     source("data_processing_CBM.R")
     
@@ -107,20 +92,31 @@ for (v in 1:length(vol)) {
     
     
     # Calculating model outputs for the starting point of the chain
-    Mleaf = Mstem = Mroot = c()
-    Mleaf[1] <- data$Mleaf[1]
-    Mstem[1] <- data$Mstem[1]
-    Mroot[1] <- data$Mroot[1]
+    for (j in 1:length(v)) {
+      data.set = subset(data,(volume %in% vol[v[j]]))
+      Mleaf = Mstem = Mroot = c()
+      Mleaf[1] <- data.set$Mleaf[1]
+      Mstem[1] <- data.set$Mstem[1]
+      Mroot[1] <- data.set$Mroot[1]
+      
+      # GPP=data.set$GPP; Rd=data.set$Rd
+      # Y=pValues$Y; k=pValues$k; af=pValues$af; as=pValues$as; sf=pValues$sf
+      
+      output.set = model(data.set$GPP,data.set$Rd,no.param,Mleaf,Mstem,Mroot,pValues$Y,pValues$k,pValues$af,pValues$as,pValues$sf)
+      output.set$volume = as.factor(vol[v[j]])
+      if (j == 1) {
+        output = output.set
+      }
+      if (j > 1) {
+        output = rbind(output,output.set)
+      }
+    }
     
-    # GPP=data$GPP; Rd=data$Rd
-    # Y=pValues$Y; k=pValues$k; af=pValues$af; as=pValues$as; sf=pValues$sf
-    
-    output = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,pValues$Y,pValues$k,pValues$af,pValues$as,pValues$sf)
     
     # Modification to consider the mean sf values over all treatments 
     # output = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,pValues$Y,pValues$k,pValues$af,pValues$as,param.sf.mean$sf.mean)
     
-    
+    data = data[order(data$volume),]
     logL0 <- logLikelihood(data,output) # Calculate log likelihood of starting point of the chain
     pChain[1,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,pValues$sf,logL0) # Assign the first parameter set with log likelihood
     # pChain[1,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,param.sf.mean$sf.mean,logL0) # Assign the first parameter set with log likelihood
@@ -161,21 +157,44 @@ for (v in 1:length(vol)) {
       
       # Calculating the outputs for the candidate parameter vector and then log likelihood
       if (Prior1 > 0) {
-        Mleaf = Mstem = Mroot = c()
-        Mleaf[1] <- data$Mleaf[1]
-        Mstem[1] <- data$Mstem[1]
-        Mroot[1] <- data$Mroot[1]
+        for (j in 1:length(v)) {
+          data.set = subset(data,(volume %in% vol[v[j]]))
+          Mleaf = Mstem = Mroot = c()
+          Mleaf[1] <- data.set$Mleaf[1]
+          Mstem[1] <- data.set$Mstem[1]
+          Mroot[1] <- data.set$Mroot[1]
+          
+          # GPP=data.set$GPP; Rd=data.set$Rd
+          # Y=pValues$Y; k=pValues$k; af=pValues$af; as=pValues$as; sf=pValues$sf
+          
+          out.cand.set = model(data.set$GPP,data.set$Rd,no.param,Mleaf,Mstem,Mroot,candidatepValues$Y,
+                               candidatepValues$k,candidatepValues$af,candidatepValues$as,candidatepValues$sf)
+          out.cand.set$volume = as.factor(vol[v[j]])
+          
+          if (j == 1) {
+            out.cand = out.cand.set
+          }
+          if (j > 1) {
+            out.cand = rbind(out.cand,out.cand.set)
+          }
+        }
         
-        GPP=data$GPP; Rd=data$Rd
-        Y=candidatepValues$Y; k=candidatepValues$k; af=candidatepValues$af; as=candidatepValues$as; sf=candidatepValues$sf
-        out.cand = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,candidatepValues$Y,
-                         candidatepValues$k,candidatepValues$af,candidatepValues$as,candidatepValues$sf)
+        # Mleaf = Mstem = Mroot = c()
+        # Mleaf[1] <- data$Mleaf[1]
+        # Mstem[1] <- data$Mstem[1]
+        # Mroot[1] <- data$Mroot[1]
+        # 
+        # # GPP=data$GPP; Rd=data$Rd
+        # # Y=candidatepValues$Y; k=candidatepValues$k; af=candidatepValues$af; as=candidatepValues$as; sf=candidatepValues$sf
+        # out.cand = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,candidatepValues$Y,
+        #                  candidatepValues$k,candidatepValues$af,candidatepValues$as,candidatepValues$sf)
         
         # Modification to consider the mean sf values over all treatments
         # sf=param.sf.mean$sf.mean
         # out.cand = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,candidatepValues$Y,
         #                  candidatepValues$k,candidatepValues$af,candidatepValues$as,param.sf.mean$sf.mean)
         
+        data = data[order(data$volume),]
         logL1 <- logLikelihood(data,out.cand) # Calculate log likelihood
         
         
@@ -183,8 +202,8 @@ for (v in 1:length(vol)) {
         logalpha <- (logPrior1+logL1) - (logPrior0+logL0) 
         # Accepting or rejecting the candidate vector
         if ( log(runif(1, min = 0, max =1)) < logalpha ) {
-        # if ( log(runif(1, min = 0, max =1)) < logalpha && candidatepValues$af + candidatepValues$as <= 1 
-        #      && candidatepValues$as >= 0 && candidatepValues$af >= 0) {
+          # if ( log(runif(1, min = 0, max =1)) < logalpha && candidatepValues$af + candidatepValues$as <= 1 
+          #      && candidatepValues$as >= 0 && candidatepValues$af >= 0) {
           # && param.k[3] <= candidatepValues$k <= param.k[1,1] && param.Y[3] <= candidatepValues$Y <= param.Y[1] ) {
           pValues <- candidatepValues
           logPrior0 <- logPrior1
@@ -228,7 +247,7 @@ for (v in 1:length(vol)) {
     }
     
     # Plotting the correlation matrix between parameter set
-    png(height=1200, width=1200, pointsize=25, file = paste("output/figures/corrMatrix/corrMatrix_",v,"_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
+    png(height=1200, width=1200, pointsize=25, file = paste("output/figures/corrMatrix/corrMatrix_",v1,"_vol_",vol[v[1]],"_par_",no.param.par.var[z],".png",sep=""))
     corrplot(corrMatrix,tl.cex=1.5,title=paste("Correlation Matrix for vol",vol[v],"with par",no.param.par.var[z]), method="circle", is.corr=FALSE,type="full", cl.cex=2,
              addgrid.col="blue",addshade="positive", addCoef.col = rgb(0,0,0), mar=c(0,0,1,0), diag= FALSE,cl.lim = c(-1,1))
     dev.off()
@@ -275,38 +294,37 @@ for (v in 1:length(vol)) {
     
     
     # Calculate final output set from the predicted parameter set
-    Mleaf = Mstem = Mroot = c()
-    Mleaf[1] <- data$Mleaf[1]
-    Mstem[1] <- data$Mstem[1]
-    Mroot[1] <- data$Mroot[1]
-    output.final = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,param.final$Y,
-                         param.final$k,param.final$af,param.final$as,param.final$sf)
+    for (j in 1:length(v)) {
+      data.set = subset(data,(volume %in% vol[v[j]]))
+      Mleaf = Mstem = Mroot = c()
+      Mleaf[1] <- data.set$Mleaf[1]
+      Mstem[1] <- data.set$Mstem[1]
+      Mroot[1] <- data.set$Mroot[1]
+      
+      # GPP=data.set$GPP; Rd=data.set$Rd
+      # Y=pValues$Y; k=pValues$k; af=pValues$af; as=pValues$as; sf=pValues$sf
+      
+      output.final.set = model(data.set$GPP,data.set$Rd,no.param,Mleaf,Mstem,Mroot,param.final$Y,
+                               param.final$k,param.final$af,param.final$as,param.final$sf)
+      output.final.set$volume = as.factor(vol[v[j]])
+      if (j == 1) {
+        output.final = output.final.set
+      }
+      if (j > 1) {
+        output.final = rbind(output.final,output.final.set)
+      }
+    }
     
-    
-    # Plotting the Measured (data) vs Modelled Plant Carbon pools for plotting and comparison
-    output.final$Date = data$Date
-    names(output.final) = c("Cstorage.modelled","Mleaf.modelled","Mstem.modelled","Mroot.modelled","Sleaf.modelled","Date")
-    melted.output = melt(output.final[,c("Mleaf.modelled","Mstem.modelled","Mroot.modelled","Sleaf.modelled","Date")], id.vars="Date")
-    melted.Cstorage = output.final[,c("Cstorage.modelled","Date")]
-    melted.data = melt(data[ , c("Mleaf","Mstem","Mroot","Sleaf","Date")], id.vars="Date")
-    melted.data$Date = as.Date(melted.data$Date)
-    melted.error = melt(data[ , c("Mleaf_SD","Mstem_SD","Mroot_SD","Sleaf_SD","Date")], id.vars="Date")
-    melted.error$Date = as.Date(melted.error$Date)
-    melted.error$volume = as.factor(vol[v])
-    melted.error$parameter = melted.data$value
-    melted.error$no.param = as.factor(no.param.par.var[z])
-    
-    melted.output$Date = as.Date(melted.output$Date)
-    melted.data$volume = as.factor(vol[v])
-    melted.output$volume = as.factor(vol[v])
-    melted.output$no.param = as.factor(no.param.par.var[z])
-    melted.Cstorage$Date = as.Date(melted.Cstorage$Date)
-    melted.Cstorage$volume = as.factor(vol[v])
-    melted.Cstorage$no.param = as.factor(no.param.par.var[z])
+    #   Mleaf = Mstem = Mroot = c()
+    # Mleaf[1] <- data$Mleaf[1]
+    # Mstem[1] <- data$Mstem[1]
+    # Mroot[1] <- data$Mroot[1]
+    # output.final = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,param.final$Y,
+    #                      param.final$k,param.final$af,param.final$as,param.final$sf)
     
     
     # Calculate daily parameter values with SD
-    Days <- seq(1,nrow(data), length.out=nrow(data))
+    Days <- seq(1,nrow(data.set), length.out=nrow(data.set))
     param.daily = param.final[1,] 
     
     if (no.param == 1) {
@@ -326,30 +344,30 @@ for (v in 1:length(vol)) {
     }
     param.daily$ar = 1 - param.daily$af - param.daily$as
     param.daily$ar_SD = with(param.daily, (af_SD*af_SD + as_SD*as_SD)^0.5)
-    param.daily$Date = as.Date(data$Date)
+    param.daily$Date = as.Date(data.set$Date)
     
     # Calculate the mean sf values
     # param.sf.mean$sf.mean = (param.daily$sf + param.sf.mean$sf.mean) / (v+z-1)
     
-    # Find the correlation matrix between parameters and data set
-    if (no.param.par.var[z] > 1) {
-      # corr_data = cbind(param.daily[,c("k","Y","af","as","ar","sf")],data[,c("GPP","Rd")])
-      # corrMatrix2 = cor(param.daily[,c("k","Y","af","as","ar","sf")])
-      corr_data = cbind(param.daily[,c("k","Y","af","as","ar","sf")],data[,c("GPP","Rd","Mleaf","Mstem","Mroot","Sleaf")])
-      corrMatrix2 = cor(corr_data, use="pairwise.complete.obs")
-      
-      # Create a matrix plot of scatterplots
-      # pairs(param.daily[,c("k","Y","af","as","ar","sf")])
-      png(height=1200, width=1200, pointsize=25, file = paste("output/figures/corr_param_data/scatterplot/param_data_",v,"_scatter_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
-      pairs(corr_data, use="pairwise.complete.obs",main=paste("Scatter plot of Parameter and data for vol",vol[v],"with par",no.param.par.var[z]), line.main=1.5, oma=c(2,2,3,2))
-      dev.off()
-      
-      # Plotting the correlation matrix between parameter and data
-      png(height=1200, width=1200, pointsize=25, file = paste("output/figures/corr_param_data/correlation_matrix/param_data_",v,"_corr_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
-      corrplot(corrMatrix2,tl.cex=1.5,title=paste("Correlation between Parameter and data for vol",vol[v],"with par",no.param.par.var[z]), method="circle", na.label = "NA", type="full", cl.cex=2,
-               addgrid.col="blue",addshade="positive", addCoef.col = rgb(0,0,0), mar=c(0,0,1,0), diag= FALSE)
-      dev.off()
-    }
+    # # Find the correlation matrix between parameters and data set
+    # if (no.param.par.var[z] > 1) {
+    #   # corr_data = cbind(param.daily[,c("k","Y","af","as","ar","sf")],data[,c("GPP","Rd")])
+    #   # corrMatrix2 = cor(param.daily[,c("k","Y","af","as","ar","sf")])
+    #   corr_data = cbind(param.daily[,c("k","Y","af","as","ar","sf")],data[,c("GPP","Rd","Mleaf","Mstem","Mroot","Sleaf")])
+    #   corrMatrix2 = cor(corr_data, use="pairwise.complete.obs")
+    #   
+    #   # Create a matrix plot of scatterplots
+    #   # pairs(param.daily[,c("k","Y","af","as","ar","sf")])
+    #   png(height=1200, width=1200, pointsize=25, file = paste("output/figures/corr_param_data/scatterplot/param_data_",v1,"_scatter_vol_",vol[v[1]],"_par_",no.param.par.var[z],".png",sep=""))
+    #   pairs(corr_data, use="pairwise.complete.obs",main=paste("Scatter plot of Parameter and data for vol",vol[v],"with par",no.param.par.var[z]), line.main=1.5, oma=c(2,2,3,2))
+    #   dev.off()
+    #   
+    #   # Plotting the correlation matrix between parameter and data
+    #   png(height=1200, width=1200, pointsize=25, file = paste("output/figures/corr_param_data/correlation_matrix/param_data_",v1,"_corr_vol_",vol[v[1]],"_par_",no.param.par.var[z],".png",sep=""))
+    #   corrplot(corrMatrix2,tl.cex=1.5,title=paste("Correlation between Parameter and data for vol",vol[v],"with par",no.param.par.var[z]), method="circle", na.label = "NA", type="full", cl.cex=2,
+    #            addgrid.col="blue",addshade="positive", addCoef.col = rgb(0,0,0), mar=c(0,0,1,0), diag= FALSE)
+    #   dev.off()
+    # }
     
     # Plotting the parameter sets over time
     # param.final$Date = data$Date[seq(1,nrow(data),param.vary)]
@@ -358,32 +376,87 @@ for (v in 1:length(vol)) {
     melted.param = data.frame(melted.param1$Date, melted.param1$variable, melted.param1$value, melted.param2$value)
     names(melted.param) = c("Date","variable","Parameter","Parameter_SD")
     melted.param$Date = as.Date(melted.param$Date)
-    melted.param$volume = vol[v]
+    # melted.param$volume = vol[v[1]]
+    melted.param$volume = list(vol[unlist(vol_group[q])])
+    melted.param$volume.group = as.factor(v1)
     melted.param$no.param = as.factor(no.param.par.var[z])
     
     
-    # Plotting C pools over time for individual volume and No. of parameter
-    pd <- position_dodge(3) # move the overlapped errorbars horizontally
-    p1 = ggplot(melted.error, aes(x=Date, y=parameter, colour=variable, group=variable)) +
-      geom_errorbar(data = melted.error, aes(ymin=parameter-value, ymax=parameter+value), width=3, size=0.3) +
-      geom_line(data = melted.output, aes(x = Date, y = value)) + 
-      geom_point(shape = 1, size = 0.5) +
-      theme_bw() +
-      ylab("Plant Carbon pool (gC)") +
-      ggtitle(paste("Measured (circles) vs Modelled (lines) C pools for vol",vol[v],"with par",no.param.par.var[z])) +
-      scale_colour_discrete(name="C pools",
-                            breaks=c("Mleaf_SD","Mleaf.modelled", "Mroot_SD","Mroot.modelled","Mstem_SD","Mstem.modelled","Sleaf_SD","Sleaf.modelled"),
-                            labels=c("Mleaf","Mleaf.modelled", "Mroot","Mroot.modelled","Mstem","Mstem.modelled","Sleaf","Sleaf.modelled")) +
-      theme(plot.title = element_text(size = 12, face = "bold")) +
-      theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
-      theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
-      theme(axis.title.y = element_text(size = 12, vjust=0.3))
-    # annotate("text", x = melted.output$Date[20], y = max(output$Mstem,na.rm = TRUE), size = 3, 
-    #          label = paste("Mean k = ", round(mean(param.final[,1]), 3), "\nMean Y = ", round(mean(param.final[,2]), 3),
-    #                        "\nMean af = ", round(mean(param.final[,3]), 3), "\nMean as = ", round(mean(param.final[,4]), 3),
-    #                        "\nMean ar = ", round(mean(param.final[,7]), 3), "\nMean sf = ",round(mean(param.final[,5]), 3), "\nChain length = ", chainLength-bunr_in))
-    p1
-    ggsave(p1,filename=paste("output/figures/Cpools/Measured_vs_Modelled_Carbon_pools_",v,"_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
+    # Plotting the Measured (data) vs Modelled Plant Carbon pools for plotting and comparison
+    for (j in 1:length(v)) {
+      data.set = subset(data,(volume %in% vol[v[j]]))
+      output.final.set = subset(output.final,(volume %in% vol[v[j]]))
+      # output.final.set = subset(output.final,(volume %in% vol[v[j]]))
+      
+      output.final.set$Date = data.set$Date
+      names(output.final.set) = c("Cstorage.modelled","Mleaf.modelled","Mstem.modelled","Mroot.modelled","Sleaf.modelled","volume","Date")
+      melted.output = melt(output.final.set[,c("Mleaf.modelled","Mstem.modelled","Mroot.modelled","Sleaf.modelled","Date")], id.vars="Date")
+      melted.output$Date = as.Date(melted.output$Date)
+      # melted.output = melted.output[order(melted.output$Date),]
+      melted.output$volume = as.factor(vol[v[j]])
+      melted.output$no.param = as.factor(no.param.par.var[z])
+      
+      melted.Cstorage = output.final.set[,c("Cstorage.modelled","Date")]
+      melted.Cstorage$Date = as.Date(melted.Cstorage$Date)
+      # melted.Cstorage = melted.Cstorage[order(melted.Cstorage$Date),]
+      melted.Cstorage$volume = as.factor(vol[v[j]])
+      melted.Cstorage$no.param = as.factor(no.param.par.var[z])
+      
+      melted.data = melt(data.set[ , c("Mleaf","Mstem","Mroot","Sleaf","Date")], id.vars="Date")
+      melted.data$Date = as.Date(melted.data$Date)
+      # melted.data = melted.data[order(melted.data$Date),]
+      melted.data$volume = as.factor(vol[v[j]])
+      
+      melted.error = melt(data.set[ , c("Mleaf_SD","Mstem_SD","Mroot_SD","Sleaf_SD","Date")], id.vars="Date")
+      melted.error$Date = as.Date(melted.error$Date)
+      # melted.error = melted.error[order(melted.error$Date),]
+      melted.error$volume = as.factor(vol[v[j]])
+      melted.error$parameter = melted.data$value
+      melted.error$no.param = as.factor(no.param.par.var[z])
+      
+      
+      # Plotting C pools over time for individual volume and No. of parameter
+      pd <- position_dodge(3) # move the overlapped errorbars horizontally
+      p1 = ggplot(melted.error, aes(x=Date, y=parameter, colour=variable, group=variable)) +
+        geom_errorbar(data = melted.error, aes(ymin=parameter-value, ymax=parameter+value), width=3, size=0.3) +
+        geom_line(data = melted.output, aes(x = Date, y = value)) + 
+        geom_point(shape = 1, size = 0.5) +
+        theme_bw() +
+        ylab("Plant Carbon pool (gC)") +
+        ggtitle(paste("Measured (circles) vs Modelled (lines) C pools for vol",vol[v[j]],"with par",no.param.par.var[z])) +
+        scale_colour_discrete(name="C pools",
+                              breaks=c("Mleaf_SD","Mleaf.modelled", "Mroot_SD","Mroot.modelled","Mstem_SD","Mstem.modelled","Sleaf_SD","Sleaf.modelled"),
+                              labels=c("Mleaf","Mleaf.modelled", "Mroot","Mroot.modelled","Mstem","Mstem.modelled","Sleaf","Sleaf.modelled")) +
+        theme(plot.title = element_text(size = 12, face = "bold")) +
+        theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+        theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+        theme(axis.title.y = element_text(size = 12, vjust=0.3))
+      # annotate("text", x = melted.output$Date[20], y = max(output$Mstem,na.rm = TRUE), size = 3, 
+      #          label = paste("Mean k = ", round(mean(param.final[,1]), 3), "\nMean Y = ", round(mean(param.final[,2]), 3),
+      #                        "\nMean af = ", round(mean(param.final[,3]), 3), "\nMean as = ", round(mean(param.final[,4]), 3),
+      #                        "\nMean ar = ", round(mean(param.final[,7]), 3), "\nMean sf = ",round(mean(param.final[,5]), 3), "\nChain length = ", chainLength-bunr_in))
+      p1
+      ggsave(p1,filename=paste("output/figures/Cpools/Measured_vs_Modelled_Carbon_pools_",v[j],"_vol_",vol[v[j]],"_par_",no.param.par.var[z],".png",sep=""))
+      
+      # Storing the summary of this volume group of data, outputs, Cstorage (Parameter is same for the group, will be stored later)
+      if (j == 1) {
+        summary.data.set = melted.data
+        summary.error.set = melted.error
+        summary.output.set = melted.output
+        summary.Cstorage.set = melted.Cstorage
+        # summary.param = melted.param
+      }
+      if (j > 1) {
+        summary.output.set = rbind(summary.output.set,melted.output)
+        summary.Cstorage.set = rbind(summary.Cstorage.set,melted.Cstorage)
+        # summary.param = rbind(summary.param,melted.param)
+        summary.error.set = rbind(summary.error.set,melted.error)
+        if (z == 1) {
+          summary.data.set = rbind(summary.data.set,melted.data)
+          # summary.error = rbind(summary.error,melted.error)
+        }
+      }
+    }
     
     
     # Plotting Allocation fractions over time for individual volume and No. of parameter
@@ -396,10 +469,13 @@ for (v in 1:length(vol)) {
       xlab("Days") +
       ylab("Parameters") +
       scale_y_continuous(limits = c(-0.15,1)) +
-      ggtitle(paste("Modelled allocation fractions for vol",vol[v],"with par",no.param.par.var[z])) +
+      ggtitle(paste("Modelled allocation fractions for volume group",v1,"with par",no.param.par.var[z])) +
       scale_colour_hue(name="Parameter",    # Legend label, use darker colors
                        l=40) +                    # Use darker colors, lightness=40
       # scale_y_continuous(breaks=0:10*0.1)  # Set tick every 0.1
+      annotate("text", x = mean(melted.param$Date), y = min(melted.param$Parameter)-mean(melted.param$Parameter_SD), size = 3,
+               label = paste("Group",v1,": Volume =", list(vol[unlist(vol_group[q])]), "L", 
+                             "\nChain length = ", chainLength-bunr_in)) +
       theme_bw() +
       theme(plot.title = element_text(size = 12, face = "bold")) +
       theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
@@ -408,28 +484,28 @@ for (v in 1:length(vol)) {
     # + theme(legend.justification=c(1,1),
     #       legend.position=c(1,1)) # Position legend in bottom right
     p2
-    ggsave(p2,filename=paste("output/figures/AF/Allocation_fractions_over_time_",v,"_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
+    ggsave(p2,filename=paste("output/figures/AF/Allocation_fractions_over_time_",v1,"_vol_",vol[v[1]],"_par_",no.param.par.var[z],".png",sep=""))
     
     
-    # Storing the summary of data, outputs, Cstorage, parameters
+    # Storing the summary of all volume group's data, outputs, Cstorage, parameters
     if (q == 1) {
-      summary.data = melted.data
-      summary.error = melted.error
-      summary.output = melted.output
-      summary.Cstorage = melted.Cstorage
+      summary.data = summary.data.set
+      summary.error = summary.error.set
+      summary.output = summary.output.set
+      summary.Cstorage = summary.Cstorage.set
       summary.param = melted.param
     }
     if (q > 1) {
-      summary.output = rbind(summary.output,melted.output)
-      summary.Cstorage = rbind(summary.Cstorage,melted.Cstorage)
+      summary.output = rbind(summary.output,summary.output.set)
+      summary.Cstorage = rbind(summary.Cstorage,summary.Cstorage.set)
       summary.param = rbind(summary.param,melted.param)
-      summary.error = rbind(summary.error,melted.error)
+      summary.error = rbind(summary.error,summary.error.set)
       if (z == 1) {
-        summary.data = rbind(summary.data,melted.data)
+        summary.data = rbind(summary.data,summary.data.set)
         # summary.error = rbind(summary.error,melted.error)
       }
     }
-    
+
     
     # Display the Acceptance rate of the chain
     nAccepted = length(unique(pChain[,1]))
@@ -459,7 +535,7 @@ for (v in 1:length(vol)) {
     
     
     # Plotting all parameter whole iterations for Day 1 only to check the convergance
-    png(file = paste("output/figures/Parameter_iterations/Parameter_iterations_day1_",v,"_vol_",vol[v],"_par_",no.param.par.var[z], ".png", sep = ""))
+    png(file = paste("output/figures/Parameter_iterations/Parameter_iterations_day1_",v1,"_vol_",vol[v],"_par_",no.param.par.var[z], ".png", sep = ""))
     par(mfrow=c(2,3),oma = c(0, 0, 2, 0))
     plot(pChain[,1],col="red",main="Utilization coefficient at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="k",ylim=c(param.k[1,1],param.k[1,3]))
     plot(pChain[,1+no.param],col="green",main="Alloc frac to Biomass at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="Y",ylim=c(param.Y[1,1],param.Y[1,3]))
@@ -467,13 +543,13 @@ for (v in 1:length(vol)) {
     plot(pChain[,1+3*no.param],col="blue",main="Alloc frac to stem at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="as",ylim=c(param.as[1,1],param.as[1,3]))
     plot(pChain[,1+4*no.param],col="green",main="Foliage turnover at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="sf",ylim=c(param.sf[1,1],param.sf[1,3]))
     plot(pChain[,1+5*no.param],col="magenta",main="Log-likelihood",cex.lab = 1.5,xlab="Iterations",ylab="Log-likelihood")
-    title(main = paste("First day Parameter iterations for vol",vol[v],"with par",no.param.par.var[z]), outer=TRUE, cex = 1.5)
+    title(main = paste("First day Parameter iterations for volume group",v1,"with par",no.param.par.var[z]), outer=TRUE, cex = 1.5)
     dev.off()
     
     
     # Store the final mean parameter values
     param.mean[q,c(1:6)] = colMeans(param.daily[ , c("k","Y","af","as","ar","sf")])
-    param.mean$volume[q] = vol[v]
+    param.mean$volume[q] = list(vol[unlist(vol_group[q])])
     param.mean$no.param[q] = no.param.par.var[z]
     
     
@@ -481,64 +557,65 @@ for (v in 1:length(vol)) {
     output.final1 = output.final
     names(output.final1) = c("Cstorage","Mleaf","Mstem","Mroot","Sleaf","Date") # Rename for the logLikelihood function
     aic.bic[q,1] <- logLikelihood(data,output.final1) # Calculate logLikelihood
-    
+
     k1 = 2 # k = 2 for the usual AIC
     npar = no.param*no.var # npar = total number of parameters in the fitted model
     aic.bic[q,2] = -2*aic.bic[q,1] + k1*npar
-    
+
     n = sum(!is.na(data$Sleaf)) + sum(!is.na(data$Mleaf)) + sum(!is.na(data$Mstem)) + sum(!is.na(data$Mroot))
     k2 = log(n) # n being the number of observations for the so-called BIC
     aic.bic[q,3] = -2*aic.bic[q,1] + k2*npar
-    
+
     time$end.time[q] <- Sys.time()
     time$time.taken[q] <- time$end.time[q] - time$start.time[q]
     aic.bic[q,4] = time$time.taken[q]
-    aic.bic[q,5] = vol[v]
+    aic.bic$volume.group[q] = v1
     aic.bic[q,6] = no.param.par.var[z]
+    aic.bic$volume[q] = list(vol[unlist(vol_group[q])])
   }
 }
 
-names(aic.bic) <- c("logLi","aic","bic","time","volume","no.param")
-write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.names = FALSE)
-melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
+# names(aic.bic) <- c("logLi","aic","bic","time","volume","no.param")
+# write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.names = FALSE)
+melted.aic.bic = melt(aic.bic[,c(1:6)], id.vars=c("no.param","volume.group"))
 
 # write.csv(param.sf.mean, file = "output/processeddata/param.sf.mean.csv", row.names = FALSE)
 # plot(param.daily$sf,type='l',col="red",main="Leaf turnover, sf",xlab="Days")
 
 # This script creates the figures and saves those
-source("generate_figures_CBM.R")
+source("generate_figures_CBM_3.R")
 # 
 # 
-# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")
-# plots1 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-#   img <- as.raster(readPNG(x))
-#   rasterGrob(img, interpolate = FALSE)
-# })
-# ggsave("corrMatrix_multipage.pdf", marrangeGrob(grobs=plots1,nrow=2,ncol=length(no.param.par.var)))
-# 
-# 
-# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/AF")
-# plots2 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-#   img <- as.raster(readPNG(x))
-#   rasterGrob(img, interpolate = FALSE)
-# })
-# ggsave("AF_multipage.pdf", marrangeGrob(grobs=plots2,nrow=2,ncol=length(no.param.par.var)))
-# 
-# 
-# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Cpools")
-# plots3 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-#   img <- as.raster(readPNG(x))
-#   rasterGrob(img, interpolate = FALSE)
-# })
-# ggsave("Cpools_multipage.pdf", marrangeGrob(grobs=plots3,nrow=2,ncol=length(no.param.par.var)))
-# 
-# 
-# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Parameter_iterations")
-# plots4 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-#   img <- as.raster(readPNG(x))
-#   rasterGrob(img, interpolate = FALSE)
-# })
-# ggsave("Parameter_iterations_multipage.pdf", marrangeGrob(grobs=plots4,nrow=2,ncol=length(no.param.par.var)))
+setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")
+plots1 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
+  img <- as.raster(readPNG(x))
+  rasterGrob(img, interpolate = FALSE)
+})
+ggsave("corrMatrix_multipage.pdf", marrangeGrob(grobs=plots1,nrow=2,ncol=length(no.param.par.var)))
+
+
+setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/AF")
+plots2 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
+  img <- as.raster(readPNG(x))
+  rasterGrob(img, interpolate = FALSE)
+})
+ggsave("AF_multipage.pdf", marrangeGrob(grobs=plots2,nrow=2,ncol=length(no.param.par.var)))
+
+
+setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Cpools")
+plots3 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
+  img <- as.raster(readPNG(x))
+  rasterGrob(img, interpolate = FALSE)
+})
+ggsave("Cpools_multipage.pdf", marrangeGrob(grobs=plots3,nrow=2,ncol=length(no.param.par.var)))
+
+
+setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Parameter_iterations")
+plots4 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
+  img <- as.raster(readPNG(x))
+  rasterGrob(img, interpolate = FALSE)
+})
+ggsave("Parameter_iterations_multipage.pdf", marrangeGrob(grobs=plots4,nrow=2,ncol=length(no.param.par.var)))
 # 
 # 
 # setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corr_param_data/correlation_matrix")

@@ -44,8 +44,8 @@ ggsave("Summary_Cpools_multipage.pdf", marrangeGrob(grobs=plots5, nrow=2, ncol=2
 # Set working directory for saving figures
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary/AF")
 
-# Plot individual modelled parameters ("k","Y","af","as","ar","sf") against "volume" and "Total No of param"
-var = as.factor(c("k","Y","af","as","ar","sf"))
+# Plot individual modelled parameters ("k","Y","af","as","ar") against "volume" and "Total No of param"
+var = as.factor(c("k","Y","af","as","ar"))
 for (p in 1:length(var)) {
   summary.param.set.limit = subset(summary.param, variable==var[p])
   for (z in 1:length(no.param.par.var)) {
@@ -139,3 +139,4 @@ ggsave("Summary_rest_multipage.pdf", marrangeGrob(grobs=plots7, nrow=2, ncol=1))
 # png("test.png")
 # multiplot(p5, p6, p6, cols=1)
 # dev.off()
+

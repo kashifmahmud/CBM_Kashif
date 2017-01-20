@@ -20,7 +20,7 @@ setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif")
 source("load_packages_functions_CBM.R")
 
 # Load the function to define the CBM equations to iteratively calculate Cstorage, Cleaf, Cstem, Croot, Sleaf, Sstem, Sroot
-source("Rfunctions/CBM_model_1.R")
+source("Rfunctions/CBM_model_2.R")
 
 # # This script imports and processes the raw HIE pot experiment data to model the carbon pools and fluxes using MCMC
 # source("initial_data_processing.R")
@@ -31,17 +31,17 @@ source("read_data_CBM.R")
 # Assign inputs for MCMC
 chainLength = 1500 # Setting the length of the Markov Chain to be generated
 bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
-no.var = 5 # variables to be modelled are: k,Y,af,as,sf
+no.var = 4 # variables to be modelled are: k,Y,af,as (sf constant)
 
 # Assign pot volumes and number of parameters per varible in temporal scale
-vol = c(20) # test run
+# vol = c(10,1000) # test run
 no.param.par.var = c(3) # test run
-# GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
-# vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
+GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
+vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
 
 param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol)))
-names(param.mean) = c("k","Y","af","as","ar","sf")
+names(param.mean) = c("k","Y","af","as","ar")
 aic.bic = data.frame(matrix(ncol = 4, nrow = length(no.param.par.var)*length(vol)))
 time = data.frame(no.param=rep(no.param.par.var,length(vol)),
                   start.time=numeric(length(no.param.par.var)*length(vol)),
@@ -62,12 +62,25 @@ q = 0 # Indicates the iteration number
 #   param.sf <- rbind(param.sf, c((param.sf[1,1]-param.sf[1,3]-param.sf[2,3]*no.days)/(no.days^2), 0, (param.sf[1,3]-param.sf[1,1]-param.sf[2,1]*no.days)/(no.days^2)))
 # }
 
-# param.sf.mean = data.frame(matrix(ncol = 2, nrow = length(unique(GPP.data.raw$Date))))
-# names(param.sf.mean) = c("Date","sf.mean")
-# param.sf.mean$Date = GPP.data.raw$Date[order(unique(GPP.data.raw$Date))]
-# param.sf.mean$sf.mean = numeric(length(unique(GPP.data.raw$Date)))
-
-# param.sf.mean = read.csv("output/processeddata/param.sf.mean.csv") # Read the mean sf values
+# param.sf.mean = data.frame(matrix(ncol = 1, nrow = no.param.par.var))
+# # param.sf.mean = data.frame(matrix(ncol = 2, nrow = length(unique(GPP.data.raw$Date))))
+# names(param.sf.mean) = "sf.mean"
+# # param.sf.mean$Date = GPP.data.raw$Date[order(unique(GPP.data.raw$Date))]
+# # param.sf.mean$sf.mean = numeric(length(unique(GPP.data.raw$Date)))
+# param.sf.mean$sf.mean = numeric(no.param.par.var)
+                                       
+# sf = read.csv("output/processeddata/param.sf.mean.csv") # Read the mean sf values
+# names(sf) = "sf"
+# sf= t(sf)
+# sf = c(0,0,0) # No leaf turnover
+# sf = c(2.019886e-02,1.563399e-04,2.371060e-06) # Taken from treatment with 5L soil volume
+sf = c(3.315346e-02,3.282381e-04,-2.246042e-06) # Taken from treatment with 10L soil volume
+# sf = c(2.000663e-02,1.226028e-04,5.511157e-06) # Taken from treatment with 15L soil volume
+sf.daily = c()
+for (i in 1:length(unique(GPP.data.raw$Date))) {
+  sf.daily[i] = sf[1]+ sf[2]*i + sf[3]*i*i
+}
+plot(sf.daily,type='l',col="red",main="Leaf turnover, sf",xlab="Days")
 
 # z=1; v=1
 for (v in 1:length(vol)) {
@@ -89,7 +102,7 @@ for (v in 1:length(vol)) {
     # 
     
     # This script initializes the parameter setting
-    source("parameter_setting.R")
+    source("parameter_setting_2.R")
     
     # Defining the variance-covariance matrix for proposal generation
     vcov = (0.01*(pMaxima-pMinima))^2
@@ -115,14 +128,16 @@ for (v in 1:length(vol)) {
     # GPP=data$GPP; Rd=data$Rd
     # Y=pValues$Y; k=pValues$k; af=pValues$af; as=pValues$as; sf=pValues$sf
     
-    output = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,pValues$Y,pValues$k,pValues$af,pValues$as,pValues$sf)
+    # pValues$sf = param.sf.mean$sf.mean # Assigning fixed sf values
+    
+    output = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,pValues$Y,pValues$k,pValues$af,pValues$as,sf)
     
     # Modification to consider the mean sf values over all treatments 
     # output = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,pValues$Y,pValues$k,pValues$af,pValues$as,param.sf.mean$sf.mean)
     
     
     logL0 <- logLikelihood(data,output) # Calculate log likelihood of starting point of the chain
-    pChain[1,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,pValues$sf,logL0) # Assign the first parameter set with log likelihood
+    pChain[1,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,logL0) # Assign the first parameter set with log likelihood
     # pChain[1,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,param.sf.mean$sf.mean,logL0) # Assign the first parameter set with log likelihood
     
     
@@ -137,13 +152,14 @@ for (v in 1:length(vol)) {
         # }
       }
       candidatepValues = data.frame(candidatepValues)
-      names(candidatepValues) <- c("k","Y","af","as","sf")
-      
+      names(candidatepValues) <- c("k","Y","af","as")
       
       # Reflected back to generate another candidate value
       reflectionFromMin = pmin( unlist(matrix(0,nrow=no.param,ncol=no.var)), unlist(candidatepValues-pMinima) )
       reflectionFromMax = pmax( unlist(list(rep(0, no.param))), unlist(candidatepValues-pMaxima) )
       candidatepValues = candidatepValues - 2 * reflectionFromMin - 2 * reflectionFromMax 
+      
+      # candidatepValues$sf = param.sf.mean$sf.mean # Assigning fixed sf values
       
       
       # Calculating the prior probability density for the candidate parameter vector
@@ -167,9 +183,9 @@ for (v in 1:length(vol)) {
         Mroot[1] <- data$Mroot[1]
         
         GPP=data$GPP; Rd=data$Rd
-        Y=candidatepValues$Y; k=candidatepValues$k; af=candidatepValues$af; as=candidatepValues$as; sf=candidatepValues$sf
+        Y=candidatepValues$Y; k=candidatepValues$k; af=candidatepValues$af; as=candidatepValues$as
         out.cand = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,candidatepValues$Y,
-                         candidatepValues$k,candidatepValues$af,candidatepValues$as,candidatepValues$sf)
+                         candidatepValues$k,candidatepValues$af,candidatepValues$as,sf)
         
         # Modification to consider the mean sf values over all treatments
         # sf=param.sf.mean$sf.mean
@@ -191,7 +207,7 @@ for (v in 1:length(vol)) {
           logL0 <- logL1
         }
       }
-      pChain[c,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,pValues$sf,logL0)
+      pChain[c,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,logL0)
       
       # Modification to consider the mean sf values over all treatments 
       # pChain[c,] <- c(pValues$k,pValues$Y,pValues$af,pValues$as,param.sf.mean$sf.mean,logL0)
@@ -200,31 +216,31 @@ for (v in 1:length(vol)) {
     pChain <- pChain[(bunr_in+1):nrow(pChain),]
     pChain = as.data.frame(pChain)
     if (no.param.par.var[z]==1) {
-      names(pChain) <- c("k1","Y1","af1","as1","sf1","logli")
+      names(pChain) <- c("k1","Y1","af1","as1","logli")
     }
     if (no.param.par.var[z]==2) {
-      names(pChain) <- c("k1","k2","Y1","Y2","af1","af2","as1","as2","sf1","sf2","logli")
+      names(pChain) <- c("k1","k2","Y1","Y2","af1","af2","as1","as2","logli")
     }
     if (no.param.par.var[z]==3) {
-      names(pChain) <- c("k1","k2","k3","Y1","Y2","Y3","af1","af2","af3","as1","as2","as3","sf1","sf2","sf3","logli")
+      names(pChain) <- c("k1","k2","k3","Y1","Y2","Y3","af1","af2","af3","as1","as2","as3","logli")
     }
     if (no.param.par.var[z]==4) {
-      names(pChain) <- c("k1","k2","k3","k4","Y1","Y2","Y3","Y4","af1","af2","af3","af4","as1","as2","as3","as4","sf1","sf2","sf3","sf4","logli")
+      names(pChain) <- c("k1","k2","k3","k4","Y1","Y2","Y3","Y4","af1","af2","af3","af4","as1","as2","as3","as4","logli")
     }
     
     # Find the correlation matrix between parameter set
     corrMatrix = cor(pChain[,c(1:ncol(pChain)-1)])
     if (no.param.par.var[z]==1) {
-      names(corrMatrix) <- c("k1","Y1","af1","as1","sf1")
+      names(corrMatrix) <- c("k1","Y1","af1","as1")
     }
     if (no.param.par.var[z]==2) {
-      names(corrMatrix) <- c("k1","k2","Y1","Y2","af1","af2","as1","as2","sf1","sf2")
+      names(corrMatrix) <- c("k1","k2","Y1","Y2","af1","af2","as1","as2")
     }
     if (no.param.par.var[z]==3) {
-      names(corrMatrix) <- c("k1","k2","k3","Y1","Y2","Y3","af1","af2","af3","as1","as2","as3","sf1","sf2","sf3")
+      names(corrMatrix) <- c("k1","k2","k3","Y1","Y2","Y3","af1","af2","af3","as1","as2","as3")
     }
     if (no.param.par.var[z]==4) {
-      names(corrMatrix) <- c("k1","k2","k3","k4","Y1","Y2","Y3","Y4","af1","af2","af3","af4","as1","as2","as3","as4","sf1","sf2","sf3","sf4")
+      names(corrMatrix) <- c("k1","k2","k3","k4","Y1","Y2","Y3","Y4","af1","af2","af3","af4","as1","as2","as3","as4")
     }
     
     # Plotting the correlation matrix between parameter set
@@ -238,19 +254,22 @@ for (v in 1:length(vol)) {
     param.set = colMeans(pChain[ , 1:(no.param*no.var)])
     param.SD = apply(pChain[ , 1:(no.param*no.var)], 2, sd)
     param.final = data.frame(matrix(ncol = (no.var)*2, nrow = no.param))
-    names(param.final) <- c("k","Y","af","as","sf","k_SD","Y_SD","af_SD","as_SD","sf_SD")
+    names(param.final) <- c("k","Y","af","as","k_SD","Y_SD","af_SD","as_SD")
     param.final$k = param.set[1:no.param]
     param.final$Y = param.set[(1+no.param):(2*no.param)]
     param.final$af = param.set[(1+2*no.param):(3*no.param)]
     param.final$as = param.set[(1+3*no.param):(4*no.param)]
-    param.final$sf = param.set[(1+4*no.param):(5*no.param)]
+    # param.final$sf = param.set[(1+4*no.param):(5*no.param)]
     # param.final$ar = 1 - param.final$af - param.final$as
     param.final$k_SD = param.SD[1:no.param]
     param.final$Y_SD = param.SD[(1+no.param):(2*no.param)]
     param.final$af_SD = param.SD[(1+2*no.param):(3*no.param)]
     param.final$as_SD = param.SD[(1+3*no.param):(4*no.param)]
-    param.final$sf_SD = param.SD[(1+4*no.param):(5*no.param)]
+    # param.final$sf_SD = param.SD[(1+4*no.param):(5*no.param)]
     # param.final$ar_SD = with(param.final, (af_SD*af_SD + as_SD*as_SD)^0.5)
+    
+    # Calculate the mean sf values
+    # param.sf.mean$sf.mean = (param.final$sf + param.sf.mean$sf.mean) / (v+z-1)
     
     
     # # Calculate the parameter set from linear and quardatic equations
@@ -280,7 +299,7 @@ for (v in 1:length(vol)) {
     Mstem[1] <- data$Mstem[1]
     Mroot[1] <- data$Mroot[1]
     output.final = model(data$GPP,data$Rd,no.param,Mleaf,Mstem,Mroot,param.final$Y,
-                         param.final$k,param.final$af,param.final$as,param.final$sf)
+                         param.final$k,param.final$af,param.final$as,sf)
     
     
     # Plotting the Measured (data) vs Modelled Plant Carbon pools for plotting and comparison
@@ -335,7 +354,7 @@ for (v in 1:length(vol)) {
     if (no.param.par.var[z] > 1) {
       # corr_data = cbind(param.daily[,c("k","Y","af","as","ar","sf")],data[,c("GPP","Rd")])
       # corrMatrix2 = cor(param.daily[,c("k","Y","af","as","ar","sf")])
-      corr_data = cbind(param.daily[,c("k","Y","af","as","ar","sf")],data[,c("GPP","Rd","Mleaf","Mstem","Mroot","Sleaf")])
+      corr_data = cbind(param.daily[,c("k","Y","af","as","ar")],data[,c("GPP","Rd","Mleaf","Mstem","Mroot","Sleaf")])
       corrMatrix2 = cor(corr_data, use="pairwise.complete.obs")
       
       # Create a matrix plot of scatterplots
@@ -353,8 +372,8 @@ for (v in 1:length(vol)) {
     
     # Plotting the parameter sets over time
     # param.final$Date = data$Date[seq(1,nrow(data),param.vary)]
-    melted.param1 = melt(param.daily[,c("k","Y","af","as","ar","sf","Date")], id.vars="Date")
-    melted.param2 = melt(param.daily[,c("k_SD","Y_SD","af_SD","as_SD","ar_SD","sf_SD","Date")], id.vars="Date")
+    melted.param1 = melt(param.daily[,c("k","Y","af","as","ar","Date")], id.vars="Date")
+    melted.param2 = melt(param.daily[,c("k_SD","Y_SD","af_SD","as_SD","ar_SD","Date")], id.vars="Date")
     melted.param = data.frame(melted.param1$Date, melted.param1$variable, melted.param1$value, melted.param2$value)
     names(melted.param) = c("Date","variable","Parameter","Parameter_SD")
     melted.param$Date = as.Date(melted.param$Date)
@@ -465,14 +484,14 @@ for (v in 1:length(vol)) {
     plot(pChain[,1+no.param],col="green",main="Alloc frac to Biomass at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="Y",ylim=c(param.Y[1,1],param.Y[1,3]))
     plot(pChain[,1+2*no.param],col="magenta",main="Alloc frac to foliage at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="af",ylim=c(param.af[1,1],param.af[1,3]))
     plot(pChain[,1+3*no.param],col="blue",main="Alloc frac to stem at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="as",ylim=c(param.as[1,1],param.as[1,3]))
-    plot(pChain[,1+4*no.param],col="green",main="Foliage turnover at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="sf",ylim=c(param.sf[1,1],param.sf[1,3]))
-    plot(pChain[,1+5*no.param],col="magenta",main="Log-likelihood",cex.lab = 1.5,xlab="Iterations",ylab="Log-likelihood")
+    # plot(pChain[,1+4*no.param],col="green",main="Foliage turnover at Day 1",cex.lab = 1.5,xlab="Iterations",ylab="sf",ylim=c(param.sf[1,1],param.sf[1,3]))
+    plot(pChain[,1+4*no.param],col="magenta",main="Log-likelihood",cex.lab = 1.5,xlab="Iterations",ylab="Log-likelihood")
     title(main = paste("First day Parameter iterations for vol",vol[v],"with par",no.param.par.var[z]), outer=TRUE, cex = 1.5)
     dev.off()
     
     
     # Store the final mean parameter values
-    param.mean[q,c(1:6)] = colMeans(param.daily[ , c("k","Y","af","as","ar","sf")])
+    param.mean[q,c(1:5)] = colMeans(param.daily[ , c("k","Y","af","as","ar")])
     param.mean$volume[q] = vol[v]
     param.mean$no.param[q] = no.param.par.var[z]
     
@@ -503,10 +522,9 @@ write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.nam
 melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 
 # write.csv(param.sf.mean, file = "output/processeddata/param.sf.mean.csv", row.names = FALSE)
-# plot(param.daily$sf,type='l',col="red",main="Leaf turnover, sf",xlab="Days")
 
 # This script creates the figures and saves those
-source("generate_figures_CBM.R")
+source("generate_figures_CBM_2.R")
 # 
 # 
 # setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")

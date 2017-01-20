@@ -52,16 +52,23 @@ for (p in 1:length(var)) {
     summary.param.set = subset(summary.param, variable==var[p] & no.param==no.param.par.var[z])
     # summary.error.set = subset(summary.error, variable==var[p] & no.param==no.param.par.var[z])
     pd <- position_dodge(0.5) # move the overlapped errorbars horizontally
-    p4 = ggplot(data = summary.param.set, aes(x = Date, y = Parameter,  group = volume, colour=factor(volume))) +
+    p4 = ggplot(data = summary.param.set, aes(x = Date, y = Parameter,  group = volume.group, colour=factor(volume.group))) +
       geom_errorbar(data = summary.param.set, aes(ymin=Parameter-Parameter_SD, ymax=Parameter+Parameter_SD), width=0.5, size=0.1) +
       geom_point(position=pd,size=0.01) +
-      geom_line(position=pd,data = summary.param.set, aes(x = Date, y = Parameter,  group = volume, colour=factor(volume))) +
+      geom_line(position=pd,data = summary.param.set, aes(x = Date, y = Parameter,  group = volume.group, colour=factor(volume.group))) +
       xlab("Days") +
       ylab(as.character(var[p])) +
       ggtitle(paste("Modelled coefficient,",as.character(var[p]),"for parameter",no.param.par.var[z])) +
-      labs(colour="Soil Volume") +
+      labs(colour="Treatment Group") +
       # scale_y_continuous(limits = c(param[1,1+(p-1)*3],param[1,3+(p-1)*3])) +
-      scale_y_continuous(limits = c(min(summary.param.set.limit$Parameter)-0.25,max(summary.param.set.limit$Parameter)+0.25)) +
+      scale_y_continuous(limits = c(min(summary.param.set.limit$Parameter)-max(summary.param.set.limit$Parameter_SD),max(summary.param.set.limit$Parameter)+max(summary.param.set.limit$Parameter_SD))) +
+      annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)-mean(summary.param.set.limit$Parameter_SD), size = 3,
+               label = paste("Group 1 = Volume: ", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
+                             "\nGroup 2 = Volume: ", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
+                             "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
+                             "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
+                             # "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
+                             "\nChain length = ", chainLength-bunr_in)) +
       theme_bw() +
       theme(plot.title = element_text(size = 12, face = "bold")) +
       theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
@@ -116,12 +123,19 @@ ggsave(p5,filename=paste("Cstorage_Modelled.png",sep=""))
 
 # Plot Model Measures ("logLi","aic","bic","time") against "volume" and "Total No of param"
 pd <- position_dodge(0.3)
-p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interaction(volume,no.param), shape=factor(no.param), colour=factor(volume))) +
+p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interaction(volume.group,no.param), shape=factor(no.param), colour=factor(volume.group))) +
   geom_point(position=pd, size=4) +
   xlab("Model Measures") +
   ylab("LogLi, AIC, BIC, Time") +
   ggtitle("LogLi, AIC, BIC, Time for various models") +
-  labs(colour="Soil Volume", shape="Total No of Parameter") +
+  labs(colour="Treatment group", shape="Total No of Parameter") +
+  annotate("text", x = melted.aic.bic$variable[1+nrow(melted.aic.bic)/2], y = min(melted.aic.bic$value), size = 3,
+           label = paste("Group 1 = Volume: ", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
+                         "\nGroup 2 = Volume: ", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
+                         "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
+                         "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
+                         # "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
+                         "\nChain length = ", chainLength-bunr_in)) +
   theme_bw() +
   theme(plot.title = element_text(size = 12, face = "bold")) +
   theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
@@ -139,3 +153,4 @@ ggsave("Summary_rest_multipage.pdf", marrangeGrob(grobs=plots7, nrow=2, ncol=1))
 # png("test.png")
 # multiplot(p5, p6, p6, cols=1)
 # dev.off()
+
