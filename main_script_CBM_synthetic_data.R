@@ -240,22 +240,49 @@ for (z in 1:length(no.param.par.var)) {
     melted.param$volume = vol[v]
     melted.param$no.param = as.factor(no.param.par.var[z])
     
+    cum.GPP = cumsum(data$GPP)
+    cum.Rd = cumsum(data$Rd)
+    cum.sum = data.frame(cum.GPP,cum.Rd)
+    names(cum.sum) = c("GPP","Rd")
+    cum.sum$Date = as.Date(unique(melted.output$Date))
+    melted.cum.sum = melt(cum.sum, id.vars="Date")
+    
+    # Plotting all parameter whole iterations for Day 1 only to check the convergance
+    p0 = ggplot() + 
+      geom_line(data = melted.cum.sum, aes(x = Date, y = value, group = variable, colour=variable)) + 
+      ylab("Plant Carbon pool (gC)") +
+      theme_bw() +
+      ggtitle(paste("GPP_Rd_vol_",vol[v],"_par_",no.param.par.var[z])) +
+      theme(plot.title = element_text(size = 12, face = "bold")) +
+      theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+      theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+      theme(axis.title.y = element_text(size = 12, vjust=0.3))
+    p0
+    ggsave(p0,filename=paste("output/figures/Cpools/GPP_Rd_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".eps",sep=""))
+    ggsave(p0,filename=paste("output/figures/Cpools/GPP_Rd_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
+    
     
     # Plotting C pools over time for individual volume and No. of parameter
     pd <- position_dodge(3) # move the overlapped errorbars horizontally
     p1 = ggplot(melted.error, aes(x=Date, y=parameter, colour=variable, group=variable)) + 
-      geom_errorbar(aes(ymin=parameter-value, ymax=parameter+value,colour=variable, linetype=variable), width=7) +
+      geom_errorbar(aes(ymin=parameter-value, ymax=parameter+value,colour=variable, linetype=variable), width=1) +
       geom_line(data = melted.output, aes(x = Date, y = value, group = variable, colour=variable)) + 
       geom_point(shape = 1, size = 1, stroke = 1.25) +
       ylab("Plant Carbon pool (gC)") +
+      theme_bw() +
       ggtitle(paste("Measured (circles) vs Modelled (lines) Plant Carbon pools_vol_",vol[v],"_par_",no.param.par.var[z])) +
       labs(linetype="Data uncertainty",colour="C pools") +
       theme(legend.title = element_text(colour="chocolate", size=10, face="bold")) +
-      annotate("text", x = melted.output$Date[20], y = max(output$Mstem,na.rm = TRUE), size = 3, 
+      annotate("text", x = melted.output$Date[10], y = max(output$Mroot,na.rm = TRUE), size = 3, 
                label = paste("Mean k = ", round(mean(param.final[,1]), 3), "\nMean Y = ", round(mean(param.final[,2]), 3),
                              "\nMean af = ", round(mean(param.final[,3]), 3), "\nMean as = ", round(mean(param.final[,4]), 3),
-                             "\nMean ar = ", round(mean(param.final[,5]), 3), "\nMean sf = ",round(mean(param.final[,6]), 3), "\nChain length = ", chainLength-bunr_in))
+                             "\nMean ar = ", round(mean(param.final[,5]), 3), "\nMean sf = ",round(mean(param.final[,6]), 3), "\nChain length = ", chainLength-bunr_in))+
+      theme(plot.title = element_text(size = 12, face = "bold")) +
+      theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+      theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+      theme(axis.title.y = element_text(size = 12, vjust=0.3))
     p1
+    ggsave(p1,filename=paste("output/figures/Cpools/Measured_vs_Modelled_Carbon_pools_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".eps",sep=""))
     ggsave(p1,filename=paste("output/figures/Cpools/Measured_vs_Modelled_Carbon_pools_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
     
     
@@ -276,6 +303,7 @@ for (z in 1:length(no.param.par.var)) {
             legend.position=c(1,1)) # Position legend in bottom right
     p2
     ggsave(p2,filename=paste("output/figures/AF/Allocation_fractions_over_time_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
+    ggsave(p2,filename=paste("output/figures/AF/Allocation_fractions_over_time_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".eps",sep=""))
     
     
     # Storing the summary of data, outputs, Cstorage, parameters
@@ -348,8 +376,8 @@ write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.nam
 melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 
 
-# This script creates the figures and saves those
-source("generate_figures_CBM_synthetic_case.R")
+# # This script creates the figures and saves those
+# source("generate_figures_CBM_synthetic_case.R")
 
 
 

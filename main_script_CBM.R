@@ -34,8 +34,8 @@ bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
-vol = c(1000) # test run
-no.param.par.var = c(3) # test run
+vol = c(5) # test run
+no.param.par.var = c(4) # test run
 # GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
 # vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
@@ -281,6 +281,7 @@ for (z in 1:length(no.param.par.var)) {
                              "\nMean ar = ", round(mean(param.final[,7]), 3), "\nMean sf = ",round(mean(param.final[,5]), 3), "\nChain length = ", chainLength-bunr_in))
     p1
     ggsave(p1,filename=paste("output/figures/Cpools/Measured_vs_Modelled_Carbon_pools_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
+    ggsave(p1,filename=paste("output/figures/Cpools/Measured_vs_Modelled_Carbon_pools_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".eps",sep=""))
     
     
     # Plotting Allocation fractions over time for individual volume and No. of parameter
@@ -301,6 +302,7 @@ for (z in 1:length(no.param.par.var)) {
             legend.position=c(1,1)) # Position legend in bottom right
     p2
     ggsave(p2,filename=paste("output/figures/AF/Allocation_fractions_over_time_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".png",sep=""))
+    ggsave(p2,filename=paste("output/figures/AF/Allocation_fractions_over_time_",q,"_vol_",vol[v],"_par_",no.param.par.var[z],".eps",sep=""))
     
     
     # Storing the summary of data, outputs, Cstorage, parameters
@@ -392,13 +394,13 @@ names(aic.bic) <- c("logLi","aic","bic","time","volume","no.param")
 write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.names = FALSE)
 melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 
-# This script calculates the min and max of c3 coefficients with quardatic equation fit for all paramter set
-if (no.param==3) {
-  source("quardatic_eq_fit.R")
-}
-
-i=120
-k.i = 0.5 + 1/120*i + c3[2,1]*i^2
+# # This script calculates the min and max of c3 coefficients with quardatic equation fit for all paramter set
+# if (no.param==3) {
+#   source("quardatic_eq_fit.R")
+# }
+# 
+# i=120
+# k.i = 0.5 + 1/120*i + c3[2,1]*i^2
 
 # # This script creates the figures and saves those
 # source("generate_figures_CBM.R")

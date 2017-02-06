@@ -22,11 +22,16 @@ for (p in 1:length(meas)) {
   p3 = ggplot(summary.error.Cpool, aes(x=Date, y=parameter, group = volume, colour=volume)) + 
     geom_point() +
     geom_errorbar(aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=3) +
-    geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,no.param), linetype=no.param, colour=volume)) + 
+    geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,volume.group,no.param), linetype=volume.group, colour=volume, size=no.param)) + 
     ylab(as.character(meas[p])) +
     ggtitle("C pools - Measured (points) vs Modelled (lines)") +
-    labs(colour="Soil Volume", linetype="Total No of Parameter", shape="Total No of Parameter") +
+    labs(colour="Soil Volume", linetype="Grouping treatment", size="Total No of Parameter") +
+    # scale_color_manual(labels = c("Individuals", "One Group"), values = c("blue", "red")) +
     theme_bw() +
+    # annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)-mean(summary.param.set.limit$Parameter_SD), size = 3,
+    #          label = paste("Grouping treatment 1 = Individual parameter sets for different treatments", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
+    #                        "\nGrouping treatment 2 = One single parameter set for all treatments", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
+    #                        "\nChain length = ", chainLength-bunr_in)) +
     theme(plot.title = element_text(size = 12, face = "bold")) +
     theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
     theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
@@ -65,9 +70,12 @@ for (p in 1:length(var)) {
       annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)-mean(summary.param.set.limit$Parameter_SD), size = 3,
                label = paste("Group 1 = Volume: ", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
                              "\nGroup 2 = Volume: ", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
-                             "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
-                             "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
+                             # "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
+                             # "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
                              # "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
+                             # "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
+                             # "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
+                             # "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
                              "\nChain length = ", chainLength-bunr_in)) +
       theme_bw() +
       theme(plot.title = element_text(size = 12, face = "bold")) +
@@ -90,7 +98,7 @@ setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary")
 
 # Plot modelled Cstorage against "volume" and "Total No of param"
 p5 = ggplot() +
-  geom_line(data = summary.Cstorage, aes(x = Date, y = Cstorage.modelled, group = interaction(volume,no.param),colour=volume, linetype=no.param)) + 
+  geom_line(data = summary.Cstorage, aes(x = Date, y = Cstorage.modelled, group = interaction(volume,volume.group),colour=volume, linetype=volume.group)) + 
   ylab("Cstorage (gC)") +
   ggtitle("Modelled Cstorage") +
   labs(colour="Soil Volume", linetype="Total No of Parameter") +
@@ -132,9 +140,12 @@ p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interact
   annotate("text", x = melted.aic.bic$variable[1+nrow(melted.aic.bic)/2], y = min(melted.aic.bic$value), size = 3,
            label = paste("Group 1 = Volume: ", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
                          "\nGroup 2 = Volume: ", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
-                         "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
-                         "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
+                         # "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
+                         # "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
                          # "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
+                         # "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
+                         # "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
+                         # "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
                          "\nChain length = ", chainLength-bunr_in)) +
   theme_bw() +
   theme(plot.title = element_text(size = 12, face = "bold")) +

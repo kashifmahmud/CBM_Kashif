@@ -16,7 +16,7 @@ k.data = 0.4
 af.data = 0.5 
 as.data = 0.2
 sf.data = 0.05 
-Y.data = 0.3  # Allocation fraction to growth respiration (Fromm literature: Y ~ 0.3)
+Y.data = 0.3  # Allocation fraction to growth respiration (From literature: Y ~ 0.3)
 param.data = c(k.data,Y.data,af.data,as.data,(1-af.data-as.data),sf.data)
   
 # # Generate random parameter sets for synthetic Cleaf,Cstem,Croot data generation

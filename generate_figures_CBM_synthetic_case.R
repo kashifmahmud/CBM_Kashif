@@ -74,6 +74,7 @@ p5 = ggplot() +
   theme(legend.title = element_text(colour="chocolate", size=10, face="bold"))
 p5
 ggsave(p5,filename=paste("Cstorage_Modelled.png",sep=""))
+ggsave(p5,filename=paste("Cstorage_Modelled.eps",sep=""))
 
 
 # Plot modelled parameter means ("k","Y","af","as","ar","sf") against "volume" and "Total No of param"
@@ -97,6 +98,7 @@ p6 = ggplot(data = melted.param.mean, aes(x = variable, y = value, group = inter
   theme(legend.title = element_text(colour="chocolate", size=10, face="bold"))
 p6
 ggsave(p6,filename=paste("Modelled_mean_allocation_fractions.png"))
+ggsave(p6,filename=paste("Modelled_mean_allocation_fractions.eps"))
 
 
 # Plot Model Measures ("logLi","aic","bic","time") against "volume" and "Total No of param"
@@ -110,6 +112,7 @@ p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interact
   theme(legend.title = element_text(colour="chocolate", size=10, face="bold"))
 p7
 ggsave(p7,filename=paste("LogLi_aic_bic_time.png"))
+ggsave(p7,filename=paste("LogLi_aic_bic_time.eps"))
 
 plots7 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
   img <- as.raster(readPNG(x))

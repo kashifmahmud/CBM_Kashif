@@ -2,6 +2,8 @@
 # Developed by Kashif Mahmud and Belinda Medlyn (November 2016)
 # k.mahmud@westernsydney.edu.au
 
+# This version tries to group various treatments according to their similarities to have a trend in paramter settings
+
 # This code carries out Bayesian calibration for 5 variables (allocation fractions: "k","Y",af","as","sf") on 
 # various temporal scales (e.g. 1,2,...,121 days) to estimate Carbon pools (Cstorage,Cleaf,Cstem,Croot) and fluxes
 
@@ -41,7 +43,8 @@ vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign a
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
 
 # Setting up the grouping of similar treatments
-vol_group <- list(c(1,2), c(3,4,5), 6, 7)
+# vol_group <- list(c(1,2), c(3,4), c(5,6), 7)
+vol_group <- list(c(1,2,3,4,5,6), 7)
 
 param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol_group)))
 names(param.mean) = c("k","Y","af","as","ar","sf")
@@ -414,6 +417,16 @@ for (v1 in 1:length(vol_group)) {
       melted.error$parameter = melted.data$value
       melted.error$no.param = as.factor(no.param.par.var[z])
       
+      if (v1 < 8){
+        melted.output$volume.group = as.factor(1)
+        melted.Cstorage$volume.group = as.factor(1)
+        melted.error$volume.group = as.factor(1)
+      }
+      if (v1 == 8){
+        melted.output$volume.group = as.factor(2)
+        melted.Cstorage$volume.group = as.factor(2)
+        melted.error$volume.group = as.factor(2)
+      }
       
       # Plotting C pools over time for individual volume and No. of parameter
       pd <- position_dodge(3) # move the overlapped errorbars horizontally
@@ -586,36 +599,36 @@ melted.aic.bic = melt(aic.bic[,c(1:6)], id.vars=c("no.param","volume.group"))
 source("generate_figures_CBM_3.R")
 # 
 # 
-setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")
-plots1 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-  img <- as.raster(readPNG(x))
-  rasterGrob(img, interpolate = FALSE)
-})
-ggsave("corrMatrix_multipage.pdf", marrangeGrob(grobs=plots1,nrow=2,ncol=length(no.param.par.var)))
-
-
-setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/AF")
-plots2 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-  img <- as.raster(readPNG(x))
-  rasterGrob(img, interpolate = FALSE)
-})
-ggsave("AF_multipage.pdf", marrangeGrob(grobs=plots2,nrow=2,ncol=length(no.param.par.var)))
-
-
-setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Cpools")
-plots3 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-  img <- as.raster(readPNG(x))
-  rasterGrob(img, interpolate = FALSE)
-})
-ggsave("Cpools_multipage.pdf", marrangeGrob(grobs=plots3,nrow=2,ncol=length(no.param.par.var)))
-
-
-setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Parameter_iterations")
-plots4 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-  img <- as.raster(readPNG(x))
-  rasterGrob(img, interpolate = FALSE)
-})
-ggsave("Parameter_iterations_multipage.pdf", marrangeGrob(grobs=plots4,nrow=2,ncol=length(no.param.par.var)))
+# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")
+# plots1 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
+#   img <- as.raster(readPNG(x))
+#   rasterGrob(img, interpolate = FALSE)
+# })
+# ggsave("corrMatrix_multipage.pdf", marrangeGrob(grobs=plots1,nrow=2,ncol=length(no.param.par.var)))
+# 
+# 
+# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/AF")
+# plots2 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
+#   img <- as.raster(readPNG(x))
+#   rasterGrob(img, interpolate = FALSE)
+# })
+# ggsave("AF_multipage.pdf", marrangeGrob(grobs=plots2,nrow=2,ncol=length(no.param.par.var)))
+# 
+# 
+# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Cpools")
+# plots3 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
+#   img <- as.raster(readPNG(x))
+#   rasterGrob(img, interpolate = FALSE)
+# })
+# ggsave("Cpools_multipage.pdf", marrangeGrob(grobs=plots3,nrow=2,ncol=length(no.param.par.var)))
+# 
+# 
+# setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Parameter_iterations")
+# plots4 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
+#   img <- as.raster(readPNG(x))
+#   rasterGrob(img, interpolate = FALSE)
+# })
+# ggsave("Parameter_iterations_multipage.pdf", marrangeGrob(grobs=plots4,nrow=2,ncol=length(no.param.par.var)))
 # 
 # 
 # setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corr_param_data/correlation_matrix")

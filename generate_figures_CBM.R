@@ -61,7 +61,8 @@ for (p in 1:length(var)) {
       ggtitle(paste("Modelled coefficient,",as.character(var[p]),"for parameter",no.param.par.var[z])) +
       labs(colour="Soil Volume") +
       # scale_y_continuous(limits = c(param[1,1+(p-1)*3],param[1,3+(p-1)*3])) +
-      scale_y_continuous(limits = c(min(summary.param.set.limit$Parameter)-0.25,max(summary.param.set.limit$Parameter)+0.25)) +
+      # scale_y_continuous(limits = c(min(summary.param.set.limit$Parameter)-0.25,max(summary.param.set.limit$Parameter)+0.25)) +
+      scale_y_continuous(limits = c(min(summary.param.set.limit$Parameter)-max(summary.param.set.limit$Parameter_SD),max(summary.param.set.limit$Parameter)+max(summary.param.set.limit$Parameter_SD))) +
       theme_bw() +
       theme(plot.title = element_text(size = 12, face = "bold")) +
       theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +

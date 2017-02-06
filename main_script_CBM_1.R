@@ -2,6 +2,8 @@
 # Developed by Kashif Mahmud and Belinda Medlyn (November 2016)
 # k.mahmud@westernsydney.edu.au
 
+# Updated version without treatment groupings
+
 # This code carries out Bayesian calibration for 5 variables (allocation fractions: "k","Y",af","as","sf") on 
 # various temporal scales (e.g. 1,2,...,121 days) to estimate Carbon pools (Cstorage,Cleaf,Cstem,Croot) and fluxes
 
@@ -29,15 +31,15 @@ source("Rfunctions/CBM_model_1.R")
 source("read_data_CBM.R")
 
 # Assign inputs for MCMC
-chainLength = 1500 # Setting the length of the Markov Chain to be generated
+chainLength = 3500 # Setting the length of the Markov Chain to be generated
 bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
-vol = c(20) # test run
+# vol = c(20) # test run
 no.param.par.var = c(3) # test run
-# GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
-# vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
+GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
+vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
 
 param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol)))
