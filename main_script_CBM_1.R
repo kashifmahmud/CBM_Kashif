@@ -36,7 +36,7 @@ bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
-# vol = c(20) # test run
+# vol = c(5,1000) # test run
 no.param.par.var = c(3) # test run
 GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
 vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
@@ -500,6 +500,7 @@ for (v in 1:length(vol)) {
   }
 }
 
+write.csv(summary.param, file = "output/processeddata/Param_summary.csv", row.names = FALSE)
 names(aic.bic) <- c("logLi","aic","bic","time","volume","no.param")
 write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.names = FALSE)
 melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
@@ -507,8 +508,8 @@ melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 # write.csv(param.sf.mean, file = "output/processeddata/param.sf.mean.csv", row.names = FALSE)
 # plot(param.daily$sf,type='l',col="red",main="Leaf turnover, sf",xlab="Days")
 
-# This script creates the figures and saves those
-source("generate_figures_CBM.R")
+# # This script creates the figures and saves those
+# source("generate_figures_CBM.R")
 # 
 # 
 # setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")

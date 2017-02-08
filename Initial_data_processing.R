@@ -144,6 +144,12 @@ ggplot() +
 
 # Save the weekly Cleaf data for MCMC CBM
 lm.weekly = subset(lm.daily,Date %in% lc.final$Date)
+
+# Assigning the same number of leaf counts for the initial date
+lm.weekly[1,2:ncol(lm.weekly)] = min(as.numeric(lm.weekly[1,2:ncol(lm.weekly)]))
+lc.final[1,2:ncol(lc.final)] = min(as.numeric(lc.final[1,2:ncol(lc.final)]))
+lc.SE.final[1,2:ncol(lc.SE.final)] = min(as.numeric(lc.SE.final[1,2:ncol(lc.SE.final)]))
+
 lm.weekly.melt <- melt(lm.weekly, id.vars = "Date")
 names(lm.weekly.melt)[2:3] <- c("volume", "leafmass")
 lm.weekly.melt$volume = as.numeric(lm.weekly.melt$volume)
@@ -252,9 +258,9 @@ x = height.dia.final$diameter
 y = height.dia.final$height
 z = height.dia.final$stemmass = eq(x,y)
 
-
 # Calculate all seedling stem mass from height and diameter using the linear model and then get the SEs from the 7 replicas
 height.dia$stemmass = eq(height.dia$diameter,height.dia$height)
+
 for(i in 1:length(vols)) {
   stemmass.idn = subset(height.dia,volume==vols[i]) 
   for(j in 1:length(unique(stemmass.idn$Date))) {
@@ -273,6 +279,11 @@ for(i in 1:length(vols)) {
     stemmass.final$stemmass_SE[j+(i-1)*length(unique(stemmass.idn$Date))] <- stemmass.idn.date["SE", 5]
   }
 }
+
+# Assigning the same number of leaf counts for the initial date
+stemmass.final$Date = as.Date(stemmass.final$Date)
+stemmass.final$stemmass[stemmass.final$Date == "2013-01-21"] = mean(stemmass.final$stemmass[stemmass.final$Date == "2013-01-21"])
+stemmass.final$stemmass_SE[stemmass.final$Date == "2013-01-21"] = mean(stemmass.final$stemmass_SE[stemmass.final$Date == "2013-01-21"])
 
 # Save the weekly Cstem data for MCMC CBM
 write.csv(stemmass.final[ , c("Date","volume","stemmass","stemmass_SE")], file = "rawdata/Cstem_weekly_data.csv", row.names = FALSE)

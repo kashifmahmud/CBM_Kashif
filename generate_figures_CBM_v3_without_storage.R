@@ -4,14 +4,15 @@
 
 # This script creates the figures and saves those
 ##############################
+# This version is for previous model without storage pool
 
 # Set working directory for saving figures
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary/Cpools")
 
 # Plot modelled vs measured data ("Mleaf","Mstem","Mroot","Sleaf") against "volume" and "Total No of param"
-meas = as.factor(c("Mleaf","Mstem","Mroot","Sleaf"))
-res = as.factor(c("Mleaf.modelled","Mstem.modelled","Mroot.modelled","Sleaf.modelled"))
-error = as.factor(c("Mleaf_SD","Mstem_SD","Mroot_SD","Sleaf_SD"))
+meas = as.factor(c("Mleaf","Mstem","Mroot"))
+res = as.factor(c("Mleaf.modelled","Mstem.modelled","Mroot.modelled"))
+error = as.factor(c("Mleaf_SD","Mstem_SD","Mroot_SD"))
 pd <- position_dodge(3) # move the overlapped errorbars horizontally
 for (p in 1:length(meas)) {
   summary.data.Cpool = subset(summary.data,variable==meas[p])
@@ -24,7 +25,7 @@ for (p in 1:length(meas)) {
     geom_errorbar(aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=3) +
     geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,no.param), linetype=no.param, colour=volume)) + 
     ylab(as.character(meas[p])) +
-    ggtitle("C pools - Measured (points) vs Modelled (lines) with storage") +
+    ggtitle("C pools - Measured (points) vs Modelled (lines) without storage") +
     labs(colour="Soil Volume", linetype="Total No of Parameter", shape="Total No of Parameter") +
     theme_bw() +
     theme(plot.title = element_text(size = 12, face = "bold")) +
@@ -32,7 +33,7 @@ for (p in 1:length(meas)) {
     theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
     theme(axis.title.y = element_text(size = 12, vjust=0.3))
   p3
-  ggsave(p3,filename=paste(meas[p],"_Measured_vs_Modelled_with_storage.png",sep=""))
+  ggsave(p3,filename=paste(meas[p],"_Measured_vs_Modelled_without_storage.png",sep=""))
 }
 plots5 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
   img <- as.raster(readPNG(x))
@@ -45,7 +46,7 @@ ggsave("Summary_Cpools_multipage.pdf", marrangeGrob(grobs=plots5, nrow=2, ncol=2
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary/AF")
 
 # Plot individual modelled parameters ("k","Y","af","as","ar","sf") against "volume" and "Total No of param"
-var = as.factor(c("k","Y","af","as","ar","sf"))
+var = as.factor(c("Y","af","as","ar","sf"))
 for (p in 1:length(var)) {
   summary.param.set.limit = subset(summary.param, variable==var[p])
   for (z in 1:length(no.param.par.var)) {
@@ -58,7 +59,7 @@ for (p in 1:length(var)) {
       geom_line(position=pd,data = summary.param.set, aes(x = Date, y = Parameter,  group = volume, colour=factor(volume))) +
       xlab("Days") +
       ylab(as.character(var[p])) +
-      ggtitle(paste("Modelled coefficient,",as.character(var[p]),"for parameter",no.param.par.var[z],"with storage")) +
+      ggtitle(paste("Modelled coefficient,",as.character(var[p]),"for parameter",no.param.par.var[z],"without storage")) +
       labs(colour="Soil Volume") +
       # scale_y_continuous(limits = c(param[1,1+(p-1)*3],param[1,3+(p-1)*3])) +
       # scale_y_continuous(limits = c(min(summary.param.set.limit$Parameter)-0.25,max(summary.param.set.limit$Parameter)+0.25)) +
@@ -69,32 +70,33 @@ for (p in 1:length(var)) {
       theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
       theme(axis.title.y = element_text(size = 12, vjust=0.3))
     p4
-    ggsave(p4,filename=paste(var[p],"_over_time_par_",z,"_with_storage",".png",sep=""))
+    ggsave(p4,filename=paste(var[p],"_over_time_par_",z,"_without_storage",".png",sep=""))
   }
 }
 plots6 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
   img <- as.raster(readPNG(x))
   rasterGrob(img, interpolate = FALSE)
 })
-ggsave("Summary_AF_multipage.pdf", marrangeGrob(grobs=plots6, nrow=2, ncol=length(no.param.par.var)))
+# ggsave("Summary_AF_multipage.pdf", marrangeGrob(grobs=plots6, nrow=2, ncol=length(no.param.par.var)))
+ggsave("Summary_AF_multipage.pdf", marrangeGrob(grobs=plots6, nrow=2, ncol=2))
 
 
 # Set working directory for saving figures
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary")
 
-# Plot modelled Cstorage against "volume" and "Total No of param"
-p5 = ggplot() +
-  geom_line(data = summary.Cstorage, aes(x = Date, y = Cstorage.modelled, group = interaction(volume,no.param),colour=volume, linetype=no.param)) + 
-  ylab("Cstorage (gC)") +
-  ggtitle("Modelled Cstorage") +
-  labs(colour="Soil Volume", linetype="Total No of Parameter") +
-  theme_bw() +
-  theme(plot.title = element_text(size = 12, face = "bold")) +
-  theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
-  theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
-  theme(axis.title.y = element_text(size = 12, vjust=0.3))
-p5
-ggsave(p5,filename=paste("Cstorage_Modelled.png",sep=""))
+# # Plot modelled Cstorage against "volume" and "Total No of param"
+# p5 = ggplot() +
+#   geom_line(data = summary.Cstorage, aes(x = Date, y = Cstorage.modelled, group = interaction(volume,no.param),colour=volume, linetype=no.param)) + 
+#   ylab("Cstorage (gC)") +
+#   ggtitle("Modelled Cstorage") +
+#   labs(colour="Soil Volume", linetype="Total No of Parameter") +
+#   theme_bw() +
+#   theme(plot.title = element_text(size = 12, face = "bold")) +
+#   theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+#   theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+#   theme(axis.title.y = element_text(size = 12, vjust=0.3))
+# p5
+# ggsave(p5,filename=paste("Cstorage_Modelled.png",sep=""))
 
 
 # # Plot modelled parameter means ("k","Y","af","as","ar","sf") against "volume" and "Total No of param"
@@ -121,7 +123,7 @@ p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interact
   geom_point(position=pd, size=4) +
   xlab("Model Measures") +
   ylab("LogLi, AIC, BIC, Time") +
-  ggtitle("LogLi, AIC, BIC, Time for various models with storage") +
+  ggtitle("LogLi, AIC, BIC, Time for various models without storage") +
   labs(colour="Soil Volume", shape="Total No of Parameter") +
   theme_bw() +
   theme(plot.title = element_text(size = 12, face = "bold")) +
@@ -129,13 +131,13 @@ p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interact
   theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
   theme(axis.title.y = element_text(size = 12, vjust=0.3))
 p7
-ggsave(p7,filename=paste("LogLi_aic_bic_time_with_storage.png"))
+ggsave(p7,filename=paste("LogLi_aic_bic_time_without_storage.png"))
 
 plots7 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
   img <- as.raster(readPNG(x))
   rasterGrob(img, interpolate = FALSE)
 })
-ggsave("Summary_rest_multipage.pdf", marrangeGrob(grobs=plots7, nrow=2, ncol=1))
+ggsave("Summary_rest_multipage.pdf", marrangeGrob(grobs=plots7, nrow=1, ncol=2))
 
 # png("test.png")
 # multiplot(p5, p6, p6, cols=1)
