@@ -15,6 +15,17 @@ Mleaf.data = subset(Mleaf.data.raw,(volume %in% vol[v]))
 Mstem.data = subset(Mstem.data.raw,(volume %in% vol[v]))
 Mroot.data = subset(Mroot.data.raw,(volume %in% vol[v]))
 
+################ Try with inverse SE data
+# Sleaf.data$tnc_SE[1:nrow(Sleaf.data)] <- Sleaf.data$tnc_SE[nrow(Sleaf.data):1]
+# Mleaf.data$leafmass_SE[1:nrow(Mleaf.data)] <- Mleaf.data$leafmass_SE[nrow(Mleaf.data):1]
+# Mstem.data$stemmass_SE[1:nrow(Mstem.data)] <- Mstem.data$stemmass_SE[nrow(Mstem.data):1]
+# Mroot.data$rootmass_SE[1:nrow(Mroot.data)] <- Mroot.data$rootmass_SE[nrow(Mroot.data):1]
+
+################ Try with 1/10 reduced SE data
+# Sleaf.data$tnc_SE <- Sleaf.data$tnc_SE / 10
+# Mleaf.data$leafmass_SE <- Mleaf.data$leafmass_SE / 10
+# Mstem.data$stemmass_SE <- Mstem.data$stemmass_SE / 10
+# Mroot.data$rootmass_SE <- Mroot.data$rootmass_SE / 10
 
 # Merge all GPP, Rd, Cleaf, Cstem, Croot data
 data = merge(GPP.data,Rd.data, all = TRUE)

@@ -29,15 +29,15 @@ source("Rfunctions/CBM_model.R")
 source("read_data_CBM.R")
 
 # Assign inputs for MCMC
-chainLength = 1500 # Setting the length of the Markov Chain to be generated
-bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
+chainLength = 2500 # Setting the length of the Markov Chain to be generated
+bunr_in = chainLength * 0.1 # Discard the first 10% iterations for Burn-IN in MCMC (According to Oijen, 2008)
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
-vol = c(5) # test run
-no.param.par.var = c(4) # test run
-# GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
-# vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
+# vol = c(5) # test run
+no.param.par.var = c(3) # test run
+GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
+vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
 
 param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol)))
@@ -402,8 +402,8 @@ melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 # i=120
 # k.i = 0.5 + 1/120*i + c3[2,1]*i^2
 
-# # This script creates the figures and saves those
-# source("generate_figures_CBM.R")
+# This script creates the figures and saves those
+source("generate_figures_CBM.R")
 
 
 # setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")

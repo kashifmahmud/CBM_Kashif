@@ -32,7 +32,7 @@ source("read_data_CBM.R")
 
 # Assign inputs for MCMC
 chainLength = 3500 # Setting the length of the Markov Chain to be generated
-bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
+bunr_in = chainLength * 0.1 # Discard the first 10% iterations for Burn-IN in MCMC (According to Oijen, 2008)
 no.var = 4 # variables to be modelled are: Y,af,as,sf (without storage pool, so no "k")
 
 # Assign pot volumes and number of parameters per varible in temporal scale
@@ -295,10 +295,18 @@ for (v in 1:length(vol)) {
         param.daily[i,] = param.final[1,] + param.final[2,] * i
       }
     }
+    # if (no.param == 3) {
+    #   for (i in 2:length(Days)) {
+    #     param.daily[i,] = param.final[1,] + param.final[2,] * i + param.final[3,] * i^2
+    #   }
+    # }
     if (no.param == 3) {
       for (i in 2:length(Days)) {
-        param.daily[i,] = param.final[1,] + param.final[2,] * i + param.final[3,] * i^2
+        param.daily[i,1:no.var] = param.final[1,1:no.var] + param.final[2,1:no.var] * i + param.final[3,1:no.var] * i^2
       }
+    }
+    for (i in (no.var+1):(2*no.var)) {
+      param.daily[,i] = ((param.final[1,i]^2 + param.final[2,i]^2 + param.final[3,i]^2)/3)^0.5
     }
     param.daily$ar = 1 - param.daily$af - param.daily$as
     param.daily$ar_SD = with(param.daily, (af_SD*af_SD + as_SD*as_SD)^0.5)

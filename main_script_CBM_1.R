@@ -32,7 +32,7 @@ source("read_data_CBM.R")
 
 # Assign inputs for MCMC
 chainLength = 3500 # Setting the length of the Markov Chain to be generated
-bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
+bunr_in = chainLength * 0.1 # Discard the first 10% iterations for Burn-IN in MCMC (According to Oijen, 2008)
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
@@ -254,6 +254,116 @@ for (v in 1:length(vol)) {
     param.final$sf_SD = param.SD[(1+4*no.param):(5*no.param)]
     # param.final$ar_SD = with(param.final, (af_SD*af_SD + as_SD*as_SD)^0.5)
     
+# #############################
+#     # Store the final parameter set values
+#     param.set = colMeans(pChain[ , 1:(no.param*no.var)])
+#     param.final = data.frame(matrix(ncol = no.var, nrow = no.param))
+#     names(param.final) <- c("k","Y","af","as","sf")
+#     param.final$k = param.set[1:no.param]
+#     param.final$Y = param.set[(1+no.param):(2*no.param)]
+#     param.final$af = param.set[(1+2*no.param):(3*no.param)]
+#     param.final$as = param.set[(1+3*no.param):(4*no.param)]
+#     param.final$sf = param.set[(1+4*no.param):(5*no.param)]
+# 
+#     # Calculate and store parameter values from all MC iterations
+#     paramk.chain = paramY.chain = paramaf.chain = paramas.chain = paramsf.chain = paramar.chain = data.frame(matrix(ncol = nrow(data), nrow = chainLength - bunr_in))
+#     names(paramk.chain) = names(paramY.chain) = names(paramaf.chain) = names(paramas.chain) = names(paramsf.chain) = names(paramar.chain) = c(1:nrow(data))
+# 
+#     if (no.param == 1) {
+#       for (t in 1:nrow(data)) {
+#         paramk.chain[,t] = pChain$k1
+#         paramY.chain[,t] = pChain$Y1
+#         paramaf.chain[,t] = pChain$af1
+#         paramas.chain[,t] = pChain$as1
+#         paramsf.chain[,t] = pChain$sf1
+#         paramar.chain[,t] = 1 - paramaf.chain[,t] - paramas.chain[,t]
+#       }
+#     }
+#     if (no.param == 2) {
+#       for (t in 1:nrow(data)) {
+#         paramk.chain[,t] = pChain$k1 + pChain$k2 * t
+#         paramY.chain[,t] = pChain$Y1 + pChain$Y2 * t
+#         paramaf.chain[,t] = pChain$af1 + pChain$af2 * t
+#         paramas.chain[,t] = pChain$as1 + pChain$as2 * t
+#         paramsf.chain[,t] = pChain$sf1 + pChain$sf2 * t
+#         paramar.chain[,t] = 1 - paramaf.chain[,t] - paramas.chain[,t]
+#       }
+#     }
+#     if (no.param == 3) {
+#       # for (i in 1:nrow(paramChain)) {
+#         for (t in 1:nrow(data)) {
+#           paramk.chain[,t] = pChain$k1 + pChain$k2 * t + pChain$k3 * t^2
+#           paramY.chain[,t] = pChain$Y1 + pChain$Y2 * t + pChain$Y3 * t^2
+#           paramaf.chain[,t] = pChain$af1 + pChain$af2 * t + pChain$af3 * t^2
+#           paramas.chain[,t] = pChain$as1 + pChain$as2 * t + pChain$as3 * t^2
+#           paramsf.chain[,t] = pChain$sf1 + pChain$sf2 * t + pChain$sf3 * t^2
+#           paramar.chain[,t] = 1 - paramaf.chain[,t] - paramas.chain[,t]
+# 
+#           # paramk.chain[i,t] = pChain$k1[i] + pChain$k2[i] * t + pChain$k3[i] * t^2
+#           # paramChain$Y[i] = pChain$Y1[i] + pChain$Y2[i] * i + pChain$Y3[i] * i^2
+#           # paramChain$af[i] = pChain$af1[i] + pChain$af2[i] * i + pChain$af3[i] * i^2
+#           # paramChain$as[i] = pChain$as1[i] + pChain$as2[i] * i + pChain$as3[i] * i^2
+#           # paramChain$sf[i] = pChain$sf1[i] + pChain$sf2[i] * i + pChain$sf3[i] * i^2
+#           # paramChain$ar[i] = 1 - paramChain$af[i] - paramChain$as[i]
+#         }
+#       # }
+#     }
+# 
+#     # Calculate daily mean parameter values with SD from all iterations
+#     paramk.chain[nrow(paramk.chain)+1,] = colMeans(paramk.chain)
+#     paramk.chain[nrow(paramk.chain)+1,] = apply(paramk.chain, 2, sd)
+#     paramY.chain[nrow(paramY.chain)+1,] = colMeans(paramY.chain)
+#     paramY.chain[nrow(paramY.chain)+1,] = apply(paramY.chain, 2, sd)
+#     paramas.chain[nrow(paramas.chain)+1,] = colMeans(paramk.chain)
+#     paramas.chain[nrow(paramas.chain)+1,] = apply(paramas.chain, 2, sd)
+#     paramaf.chain[nrow(paramaf.chain)+1,] = colMeans(paramaf.chain)
+#     paramaf.chain[nrow(paramaf.chain)+1,] = apply(paramaf.chain, 2, sd)
+#     paramar.chain[nrow(paramar.chain)+1,] = colMeans(paramar.chain)
+#     paramar.chain[nrow(paramar.chain)+1,] = apply(paramar.chain, 2, sd)
+#     paramsf.chain[nrow(paramsf.chain)+1,] = colMeans(paramsf.chain)
+#     paramsf.chain[nrow(paramsf.chain)+1,] = apply(paramsf.chain, 2, sd)
+# 
+#     # Initialize the daily parameter matrix
+#     Days <- seq(1,nrow(data), length.out=nrow(data))
+#     param.daily = data.frame(matrix(ncol = (no.var+1)*2, nrow = nrow(data)))
+#     names(param.daily) <- c("k","Y","af","as","sf","ar","k_SD","Y_SD","af_SD","as_SD","sf_SD","ar_SD")
+# 
+#     # param.daily$k = as.numeric(t(paramk.chain[nrow(paramk.chain)-1, ]))
+#     param.daily$k_SD = as.numeric(t(paramk.chain[nrow(paramk.chain), ]))
+#     # param.daily$Y = as.numeric(t(paramY.chain[nrow(paramY.chain)-1, ]))
+#     param.daily$Y_SD = as.numeric(t(paramY.chain[nrow(paramY.chain), ]))
+#     # param.daily$af = as.numeric(t(paramaf.chain[nrow(paramaf.chain)-1, ]))
+#     param.daily$af_SD = as.numeric(t(paramaf.chain[nrow(paramaf.chain), ]))
+#     # param.daily$as = as.numeric(t(paramas.chain[nrow(paramas.chain)-1, ]))
+#     param.daily$as_SD = as.numeric(t(paramas.chain[nrow(paramas.chain), ]))
+#     # param.daily$ar = as.numeric(t(paramar.chain[nrow(paramar.chain)-1, ]))
+#     # param.daily$ar_SD = as.numeric(t(paramar.chain[nrow(paramar.chain), ]))
+#     # param.daily$sf = as.numeric(t(paramsf.chain[nrow(paramsf.chain)-1, ]))
+#     param.daily$sf_SD = as.numeric(t(paramsf.chain[nrow(paramsf.chain), ]))
+#     # param.daily$Date = as.Date(data$Date)
+# 
+#     # Calculate daily parameter values from mean modelled parameters
+#     if (no.param == 1) {
+#       for (i in 2:length(Days)) {
+#         param.daily[i,] = param.final[1,]
+#       }
+#     }
+#     if (no.param == 2) {
+#       for (i in 2:length(Days)) {
+#         param.daily[i,] = param.final[1,] + param.final[2,] * i
+#       }
+#     }
+#     if (no.param == 3) {
+#       for (i in 2:length(Days)) {
+#         param.daily[i,1:no.var] = param.final[1,1:no.var] + param.final[2,1:no.var] * i + param.final[3,1:no.var] * i^2
+#         #  param.daily[i,no.var+1:2*no.var] = param.final[1,no.var+1:2*no.var] + param.final[2,] + param.final[3,]
+#       }
+#     }
+#     param.daily$ar = 1 - param.daily$af - param.daily$as
+#     param.daily$ar_SD = with(param.daily, ((af_SD*af_SD + as_SD*as_SD)/2)^0.5)
+#     param.daily$Date = as.Date(data$Date)
+#     
+# ##############################
     
     # # Calculate the parameter set from linear and quardatic equations
     # # if (no.param == 1) {
@@ -309,8 +419,8 @@ for (v in 1:length(vol)) {
     
     # Calculate daily parameter values with SD
     Days <- seq(1,nrow(data), length.out=nrow(data))
-    param.daily = param.final[1,] 
-    
+    param.daily = param.final[1,]
+
     if (no.param == 1) {
       for (i in 2:length(Days)) {
         param.daily[i,] = param.final[1,]
@@ -323,13 +433,16 @@ for (v in 1:length(vol)) {
     }
     if (no.param == 3) {
       for (i in 2:length(Days)) {
-        param.daily[i,] = param.final[1,] + param.final[2,] * i + param.final[3,] * i^2
-      }
+        param.daily[i,1:no.var] = param.final[1,1:no.var] + param.final[2,1:no.var] * i + param.final[3,1:no.var] * i^2
+        }
+    }
+    for (i in (no.var+1):(2*no.var)) {
+      param.daily[,i] = ((param.final[1,i]^2 + param.final[2,i]^2 + param.final[3,i]^2)/3)^0.5
     }
     param.daily$ar = 1 - param.daily$af - param.daily$as
-    param.daily$ar_SD = with(param.daily, (af_SD*af_SD + as_SD*as_SD)^0.5)
+    param.daily$ar_SD = with(param.daily, ((af_SD*af_SD + as_SD*as_SD)/2)^0.5)
     param.daily$Date = as.Date(data$Date)
-    
+
     # Calculate the mean sf values
     # param.sf.mean$sf.mean = (param.daily$sf + param.sf.mean$sf.mean) / (v+z-1)
     
@@ -508,8 +621,8 @@ melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 # write.csv(param.sf.mean, file = "output/processeddata/param.sf.mean.csv", row.names = FALSE)
 # plot(param.daily$sf,type='l',col="red",main="Leaf turnover, sf",xlab="Days")
 
-# # This script creates the figures and saves those
-# source("generate_figures_CBM.R")
+# This script creates the figures and saves those
+source("generate_figures_CBM.R")
 # 
 # 
 # setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")

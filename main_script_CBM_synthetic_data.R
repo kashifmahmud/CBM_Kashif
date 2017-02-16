@@ -19,8 +19,8 @@ setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif")
 source("load_packages_functions_CBM.R")
 
 # Assign inputs for MCMC
-chainLength = 10500 # Setting the length of the Markov Chain to be generated
-bunr_in = 500 # Discard the first 500 iterations for Burn-IN in MCMC
+chainLength = 3500 # Setting the length of the Markov Chain to be generated
+bunr_in = chainLength*0.1 # Discard the first 10% iterations for Burn-IN in MCMC
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
@@ -198,7 +198,7 @@ for (z in 1:length(no.param.par.var)) {
     param.final$af_SD = param.SD[(1+2*no.param):(3*no.param)]
     param.final$as_SD = param.SD[(1+3*no.param):(4*no.param)]
     param.final$sf_SD = param.SD[(1+4*no.param):(5*no.param)]
-    param.final$ar_SD = with(param.final, (af_SD*af_SD + as_SD*as_SD)^0.5)
+    param.final$ar_SD = with(param.final, ((af_SD*af_SD + as_SD*as_SD)/2)^0.5)
     
     
     # Calculate final output set from the predicted parameter set
@@ -376,8 +376,8 @@ write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.nam
 melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 
 
-# # This script creates the figures and saves those
-# source("generate_figures_CBM_synthetic_case.R")
+# This script creates the figures and saves those
+source("generate_figures_CBM_synthetic_case.R")
 
 
 

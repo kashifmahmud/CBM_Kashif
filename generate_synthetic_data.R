@@ -6,7 +6,7 @@
 day = 1:30 # Time in days
 
 # Gerenate normally distributed random numbers for GPP and Rd with mean and SD
-GPP.data = rnorm2(length(day),1,0.4) # Generate GPP data with mean=15, sd=3  # Units g C d-1
+GPP.data = rnorm2(length(day),1,0.4) # Generate GPP data with mean=1, sd=0.4  # Units g C d-1
 GPP.data = GPP.data[order(GPP.data)] # Order the genrenated data sequentially to have realistic GPP data
 Rd.data = rnorm2(length(day),0.04,0.008) # Generate Rd data with mean=0.04, sd=0.008  # Units g C g-1 C d-1
 
@@ -51,6 +51,11 @@ library(purrr)
 gap.data = map_df(data, function(x) {x[sample(c(TRUE, NA), prob = c(0.2, 0.8), size = length(x), replace = TRUE)]})
 gap.data[1,] = data[1,]
 data = gap.data
+
+# Adding small noise with the data to move the means
+noise = as.data.frame(replicate(ncol(data), sample(c(-2,-1,0,1,2), length(day), replace = TRUE))) # rnorm2(length(day),0,0.01)
+noise = noise * rnorm2(length(day),0,0.01)
+data = data + noise
 
 # Initialize SD of data sets
 data$Mleaf_SD = data$Mleaf * runif(30,0.05,0.1)

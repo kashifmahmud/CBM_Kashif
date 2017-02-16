@@ -43,7 +43,7 @@ lc.SE.final = lc.final
 for(i in 1:length(vols)) { #-- Create objects  'lc.idn.1', 'lc.idn.2', ... 'lc.idn.7' --
   lc.idn = subset(lc,volume==vols[i]) 
   lc.idn[nrow(lc.idn)+1, ] = colMeans(lc.idn, na.rm = TRUE) # R8 = Average of leaf counts
-  lc.idn[nrow(lc.idn)+1, ] = (apply(lc.idn[1:ncol(lc.idn)], 2, sd, na.rm = TRUE))/(ncol(lc.idn)-3)^0.5 # R9 = Standard deviation of leaf counts
+  lc.idn[nrow(lc.idn)+1, ] = (apply(lc.idn[1:ncol(lc.idn)], 2, sd, na.rm = TRUE))/(ncol(lc.idn)-3)^0.5 # R9 = Standard error of leaf counts
   # lc.idn[nrow(lc.idn)+1, ] = apply(lc.idn[1:ncol(lc.idn)], 2, sd, na.rm = TRUE) # R9 = Standard deviation of leaf counts
   dimnames(lc.idn)[[1]] <- c(1:(nrow(lc.idn)-2), "Mean", "SE")
   # lc.idn[] <- round(lc.idn)
@@ -51,6 +51,7 @@ for(i in 1:length(vols)) { #-- Create objects  'lc.idn.1', 'lc.idn.2', ... 'lc.i
   nam2 <- paste("SE_volume_", vols[i], sep = "")
   lc.final[,i+1] <- as.data.frame(t(lc.idn[nrow(lc.idn)-1, 4:ncol(lc.idn)]))
   lc.SE.final[,i+1] = as.data.frame(t(lc.idn[nrow(lc.idn), 4:ncol(lc.idn)]))
+  # lc.SE.final[,i+1] = as.data.frame(t(lc.idn[nrow(lc.idn), ncol(lc.idn):4])) # Test with reverve SE
   names(lc.final)[(i+1)] <- nam1
   names(lc.SE.final)[(i+1)] <- nam2
 }
@@ -86,7 +87,7 @@ harvest_data <- merge(plot.summary,harvest_data,by=c("pot","plot"))
 for(i in 1:length(vols)) {
   hd.idn = subset(harvest_data,volume==vols[i]) 
   hd.idn[nrow(hd.idn)+1, ] = colMeans(hd.idn, na.rm = TRUE) # R8 = Average of leaf counts
-  hd.idn[nrow(hd.idn)+1, ] = (apply(hd.idn, 2, sd))/(nrow(hd.idn)-1)^0.5 # R9 = Standard deviation of leaf counts
+  hd.idn[nrow(hd.idn)+1, ] = (apply(hd.idn, 2, sd))/(nrow(hd.idn)-1)^0.5 # R9 = Standard error of leaf counts
   # hd.idn[nrow(hd.idn)+1, ] = apply(hd.idn, 2, sd) # R9 = Standard deviation of leaf counts
   hd.idn$newleaf_count <- round(hd.idn$newleaf_count)
   hd.idn$leaf_count <- round(hd.idn$leaf_count)
@@ -131,6 +132,9 @@ for(i in 1:length(vols)) {
 }
 names(lm.daily)[1:ncol(lm.daily)] <- c("Date", "volume_5", "volume_10", "volume_15", "volume_20", "volume_25", "volume_35", "volume_1000")
 
+# cheching the ratio of LM to LC for different seedlings
+# ratio = hd.final$leaf_mass/ hd.final$leaf_count
+
 lm.daily.melt <- melt(lm.daily, id.vars = "Date")
 names(lm.daily.melt)[2:3] <- c("volume", "leafmass")
 # plot interpolated daily leaf mass from harvest data
@@ -149,6 +153,9 @@ lm.weekly = subset(lm.daily,Date %in% lc.final$Date)
 lm.weekly[1,2:ncol(lm.weekly)] = min(as.numeric(lm.weekly[1,2:ncol(lm.weekly)]))
 lc.final[1,2:ncol(lc.final)] = min(as.numeric(lc.final[1,2:ncol(lc.final)]))
 lc.SE.final[1,2:ncol(lc.SE.final)] = min(as.numeric(lc.SE.final[1,2:ncol(lc.SE.final)]))
+
+# lc.SE.final1 <- lc.SE.final
+# lc.SE.final[1:nrow(lc.SE.final),2:ncol(lc.SE.final)] <- lc.SE.final1[nrow(lc.SE.final):1,2:ncol(lc.SE.final)]
 
 lm.weekly.melt <- melt(lm.weekly, id.vars = "Date")
 names(lm.weekly.melt)[2:3] <- c("volume", "leafmass")
@@ -195,7 +202,7 @@ for(i in 1:length(vols)) {
   for(j in 1:length(unique(height.dia.idn$Date))) {
     height.dia.idn.date = subset(height.dia.idn, Date == unique(height.dia.idn$Date)[j])
     height.dia.idn.date[nrow(height.dia.idn.date)+1, 2:ncol(height.dia.idn.date)] = colMeans(height.dia.idn.date[2:ncol(height.dia.idn.date)], na.rm = TRUE) # R7 = Average of leaf data
-    height.dia.idn.date[nrow(height.dia.idn.date)+1, 2:ncol(height.dia.idn.date)] = (apply(height.dia.idn.date[2:ncol(height.dia.idn.date)], 2, sd, na.rm = TRUE))/(nrow(height.dia.idn.date)-1)^0.5 # R8 = Standard deviation of leaf counts
+    height.dia.idn.date[nrow(height.dia.idn.date)+1, 2:ncol(height.dia.idn.date)] = (apply(height.dia.idn.date[2:ncol(height.dia.idn.date)], 2, sd, na.rm = TRUE))/(nrow(height.dia.idn.date)-1)^0.5 # R8 = Standard error of leaf counts
     # height.dia.idn.date[nrow(height.dia.idn.date)+1, 2:ncol(height.dia.idn.date)] = apply(height.dia.idn.date[2:ncol(height.dia.idn.date)], 2, sd, na.rm = TRUE) # R8 = Standard deviation of leaf counts
     height.dia.idn.date$Date = height.dia.idn.date$Date[1]
     dimnames(height.dia.idn.date)[[1]] <- c(1:(nrow(height.dia.idn.date)-2), "Mean", "SE")
@@ -213,7 +220,7 @@ for(i in 1:length(vols)) {
 # Import initial seedling data
 initial.data <- read.csv("rawdata/seedling_initial.csv")
 initial.data[nrow(initial.data)+1, 2:ncol(initial.data)] = colMeans(initial.data[2:ncol(initial.data)], na.rm = TRUE) # R7 = Average of leaf data
-initial.data[nrow(initial.data)+1, 2:ncol(initial.data)] = (apply(initial.data[2:ncol(initial.data)], 2, sd, na.rm = TRUE))/(nrow(initial.data)-1)^0.5 # R8 = Standard deviation of leaf counts
+initial.data[nrow(initial.data)+1, 2:ncol(initial.data)] = (apply(initial.data[2:ncol(initial.data)], 2, sd, na.rm = TRUE))/(nrow(initial.data)-1)^0.5 # R8 = Standard error
 # initial.data[nrow(initial.data)+1, 2:ncol(initial.data)] = apply(initial.data[2:ncol(initial.data)], 2, sd, na.rm = TRUE) # R8 = Standard deviation of leaf counts
 dimnames(initial.data)[[1]] <- c(1:(nrow(initial.data)-2), "Mean", "SE")
 
@@ -224,7 +231,7 @@ end.data = end.data[with(end.data, order(volume)), ]
 for(i in 1:length(vols)) {
   end.data.idn = subset(end.data,volume==vols[i]) 
   end.data.idn[nrow(end.data.idn)+1, 2:ncol(end.data.idn)] = colMeans(end.data.idn[2:ncol(end.data.idn)], na.rm = TRUE) # R7 = Average of leaf data
-  end.data.idn[nrow(end.data.idn)+1, 2:ncol(end.data.idn)] = (apply(end.data.idn[2:ncol(end.data.idn)], 2, sd, na.rm = TRUE))/(nrow(end.data.idn)-1)^0.5 # R8 = Standard deviation of leaf counts
+  end.data.idn[nrow(end.data.idn)+1, 2:ncol(end.data.idn)] = (apply(end.data.idn[2:ncol(end.data.idn)], 2, sd, na.rm = TRUE))/(nrow(end.data.idn)-1)^0.5 # R8 = Standard error
   # end.data.idn[nrow(end.data.idn)+1, 2:ncol(end.data.idn)] = apply(end.data.idn[2:ncol(end.data.idn)], 2, sd, na.rm = TRUE) # R8 = Standard deviation of leaf counts
   end.data.idn$volume = end.data.idn$volume[1]
   dimnames(end.data.idn)[[1]] <- c(1:(nrow(end.data.idn)-2), "Mean", "SE")
@@ -266,7 +273,7 @@ for(i in 1:length(vols)) {
   for(j in 1:length(unique(stemmass.idn$Date))) {
     stemmass.idn.date = subset(stemmass.idn, Date == unique(stemmass.idn$Date)[j])
     stemmass.idn.date[nrow(stemmass.idn.date)+1, 2:ncol(stemmass.idn.date)] = colMeans(stemmass.idn.date[2:ncol(stemmass.idn.date)], na.rm = TRUE) # R7 = Average of leaf data
-    stemmass.idn.date[nrow(stemmass.idn.date)+1, 2:ncol(stemmass.idn.date)] = (apply(stemmass.idn.date[2:ncol(stemmass.idn.date)], 2, sd, na.rm = TRUE))/(nrow(stemmass.idn.date)-1)^0.5 # R8 = Standard deviation of leaf counts
+    stemmass.idn.date[nrow(stemmass.idn.date)+1, 2:ncol(stemmass.idn.date)] = (apply(stemmass.idn.date[2:ncol(stemmass.idn.date)], 2, sd, na.rm = TRUE))/(nrow(stemmass.idn.date)-1)^0.5 # R8 = Standard error
     # stemmass.idn.date[nrow(stemmass.idn.date)+1, 2:ncol(stemmass.idn.date)] = apply(stemmass.idn.date[2:ncol(stemmass.idn.date)], 2, sd, na.rm = TRUE) # R8 = Standard deviation of leaf counts
     stemmass.idn.date$Date = stemmass.idn.date$Date[1]
     dimnames(stemmass.idn.date)[[1]] <- c(1:(nrow(stemmass.idn.date)-2), "Mean", "SE")
@@ -278,6 +285,8 @@ for(i in 1:length(vols)) {
     stemmass.final$dia_SE[j+(i-1)*length(unique(stemmass.idn$Date))] <- stemmass.idn.date["SE", 4]
     stemmass.final$stemmass_SE[j+(i-1)*length(unique(stemmass.idn$Date))] <- stemmass.idn.date["SE", 5]
   }
+  # stemmass.final1 <- stemmass.final
+  # stemmass.final$stemmass_SE[1:nrow(stemmass.final1)] <- stemmass.final1$stemmass_SE[nrow(stemmass.final1):1]
 }
 
 # Assigning the same number of leaf counts for the initial date
@@ -417,7 +426,7 @@ for(i in 1:length(vols)) {
   for(j in 1:length(unique(tnc.idn$Date))) {
     tnc.idn.date = subset(tnc.idn, Date == unique(tnc.idn$Date)[j])
     tnc.idn.date[nrow(tnc.idn.date)+1, 2:ncol(tnc.idn.date)] = colMeans(tnc.idn.date[2:ncol(tnc.idn.date)], na.rm = TRUE) # R7 = Average of tnc
-    tnc.idn.date[nrow(tnc.idn.date)+1, 2:ncol(tnc.idn.date)] = (apply(tnc.idn.date[2:ncol(tnc.idn.date)], 2, sd))/(nrow(tnc.idn.date)-1)^0.5 # R8 = Standard deviation of tnc
+    tnc.idn.date[nrow(tnc.idn.date)+1, 2:ncol(tnc.idn.date)] = (apply(tnc.idn.date[2:ncol(tnc.idn.date)], 2, sd))/(nrow(tnc.idn.date)-1)^0.5 # R8 = Standard error of tnc
     # tnc.idn.date[nrow(tnc.idn.date)+1, 2:ncol(tnc.idn.date)] = apply(tnc.idn.date[2:ncol(tnc.idn.date)], 2, sd) # R8 = Standard deviation of tnc
     tnc.idn.date$Date = tnc.idn.date[1,1]
     dimnames(tnc.idn.date)[[1]] <- c(1:(nrow(tnc.idn.date)-2), "Mean", "SE")

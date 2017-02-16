@@ -18,8 +18,10 @@ logLikelihood <- function (data,output) {
     if (!is.na(data$Mroot[i])) {
       logLi[i] = logLi[i] - 0.5*((output$Mroot[i] - data$Mroot[i])/data$Mroot_SD[i])^2 - log(data$Mroot_SD[i]) - log(2*pi)^0.5
     }
-    if (!is.na(data$Sleaf[i])) {
-      logLi[i] = logLi[i] - 0.5*((output$Sleaf[i] - data$Sleaf[i])/data$Sleaf_SD[i])^2 - log(data$Sleaf_SD[i]) - log(2*pi)^0.5
+    if (!is.null(data$Sleaf)) {
+      if (!is.na(data$Sleaf[i])) {
+        logLi[i] = logLi[i] - 0.5*((output$Sleaf[i] - data$Sleaf[i])/data$Sleaf_SD[i])^2 - log(data$Sleaf_SD[i]) - log(2*pi)^0.5
+      }
     }
   }
   return(sum(logLi))

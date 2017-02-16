@@ -28,10 +28,10 @@ for (p in 1:length(meas)) {
     labs(colour="Soil Volume", linetype="Grouping treatment", size="Total No of Parameter") +
     # scale_color_manual(labels = c("Individuals", "One Group"), values = c("blue", "red")) +
     theme_bw() +
-    # annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)-mean(summary.param.set.limit$Parameter_SD), size = 3,
-    #          label = paste("Grouping treatment 1 = Individual parameter sets for different treatments", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
-    #                        "\nGrouping treatment 2 = One single parameter set for all treatments", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
-    #                        "\nChain length = ", chainLength-bunr_in)) +
+    annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)-mean(summary.param.set.limit$Parameter_SD), size = 3,
+             label = paste("Grouping treatment 1 = Individual parameter sets for different treatments",
+                           "\nGrouping treatment 2 = One single parameter set for all treatments",
+                           "\nChain length = ", chainLength-bunr_in)) +
     theme(plot.title = element_text(size = 12, face = "bold")) +
     theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
     theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
@@ -67,15 +67,16 @@ for (p in 1:length(var)) {
       labs(colour="Treatment Group") +
       # scale_y_continuous(limits = c(param[1,1+(p-1)*3],param[1,3+(p-1)*3])) +
       scale_y_continuous(limits = c(min(summary.param.set.limit$Parameter)-max(summary.param.set.limit$Parameter_SD),max(summary.param.set.limit$Parameter)+max(summary.param.set.limit$Parameter_SD))) +
-      annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)-mean(summary.param.set.limit$Parameter_SD), size = 3,
-               label = paste("Group 1 = Volume: ", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
+      # annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)-(mean(summary.param.set.limit$Parameter_SD)/4), size = 3,
+      annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)+(mean(summary.param.set.limit$Parameter_SD)*2), size = 3,
+                        label = paste("Group 1 = Volume: ", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
                              "\nGroup 2 = Volume: ", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
-                             # "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
-                             # "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
-                             # "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
-                             # "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
-                             # "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
-                             # "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
+                             "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
+                             "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
+                             "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
+                             "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
+                             "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
+                             "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
                              "\nChain length = ", chainLength-bunr_in)) +
       theme_bw() +
       theme(plot.title = element_text(size = 12, face = "bold")) +
@@ -137,15 +138,15 @@ p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interact
   ylab("LogLi, AIC, BIC, Time") +
   ggtitle("LogLi, AIC, BIC, Time for various models") +
   labs(colour="Treatment group", shape="Total No of Parameter") +
-  annotate("text", x = melted.aic.bic$variable[1+nrow(melted.aic.bic)/2], y = min(melted.aic.bic$value), size = 3,
+  annotate("text", x = melted.aic.bic$variable[1+nrow(melted.aic.bic)/2], y = min(melted.aic.bic$value)/2, size = 3,
            label = paste("Group 1 = Volume: ", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
                          "\nGroup 2 = Volume: ", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
-                         # "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
-                         # "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
-                         # "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
-                         # "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
-                         # "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
-                         # "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
+                         "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
+                         "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
+                         "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
+                         "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
+                         "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
+                         "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
                          "\nChain length = ", chainLength-bunr_in)) +
   theme_bw() +
   theme(plot.title = element_text(size = 12, face = "bold")) +
