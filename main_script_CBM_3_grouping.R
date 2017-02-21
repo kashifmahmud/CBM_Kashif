@@ -44,7 +44,7 @@ vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign a
 
 # Setting up the grouping of similar treatments
 # vol_group <- list(c(1,2), c(3,4), c(5,6), 7)
-vol_group <- list(1,2,3,4,5,6,7,c(1,2,3,4,5,6,7))
+vol_group <- list(c(1,2),c(3,4,5,6),7)
 
 param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol_group)))
 names(param.mean) = c("k","Y","af","as","ar","sf")
@@ -715,8 +715,8 @@ melted.aic.bic = melt(aic.bic[,c(1:6)], id.vars=c("no.param","volume.group"))
 # write.csv(param.sf.mean, file = "output/processeddata/param.sf.mean.csv", row.names = FALSE)
 # plot(param.daily$sf,type='l',col="red",main="Leaf turnover, sf",xlab="Days")
 
-# This script creates the figures and saves those
-source("generate_figures_CBM_3.R")
+# # This script creates the figures and saves those
+# source("generate_figures_CBM_3.R")
 # 
 # 
 # setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/corrMatrix")
