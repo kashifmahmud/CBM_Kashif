@@ -3,16 +3,38 @@
 # Import daily GPP, daily Rd data
 # c3 = read.csv("rawdata/c3.csv") # min and max of c3 coefficients with quardatic equation fit for all paramter set
 
-# Setting lower and upper bounds of the prior parameter pdf, and starting point of the chain
-param.k <- matrix(c(0,0.45,1) , nrow=1, ncol=3, byrow=T) 
-param.Y <- matrix(c(0.25,0.3,0.35) , nrow=1, ncol=3, byrow=T) 
-param.af <- matrix(c(0.1,0.4,0.7) , nrow=1, ncol=3, byrow=T) 
-param.as <- matrix(c(0.1,0.2,0.5) , nrow=1, ncol=3, byrow=T) 
+# # Setting lower and upper bounds of the prior parameter pdf, and starting point of the chain
+# # Trial 1
+# param.k <- matrix(c(0,0.5,1) , nrow=1, ncol=3, byrow=T)
+# param.Y <- matrix(c(0.25,0.3,0.35) , nrow=1, ncol=3, byrow=T)
+# param.af <- matrix(c(0.1,0.4,0.7) , nrow=1, ncol=3, byrow=T)
+# param.as <- matrix(c(0.1,0.3,0.5) , nrow=1, ncol=3, byrow=T)
+# param.sf <- matrix(c(0,0.05,0.1) , nrow=1, ncol=3, byrow=T)
+
+# Trial 1: Try wide priors
+param.k <- matrix(c(0,0.5,1) , nrow=1, ncol=3, byrow=T)
+param.Y <- matrix(c(0.25,0.3,0.35) , nrow=1, ncol=3, byrow=T)
+param.af <- matrix(c(0,0.4,1) , nrow=1, ncol=3, byrow=T)
+param.as <- matrix(c(0,0.3,1) , nrow=1, ncol=3, byrow=T)
 param.sf <- matrix(c(0,0.05,0.1) , nrow=1, ncol=3, byrow=T)
+
+# # Trial 2
+# param.k <- matrix(c(0,0,1) , nrow=1, ncol=3, byrow=T)
+# param.Y <- matrix(c(0.25,0.25,0.35) , nrow=1, ncol=3, byrow=T)
+# param.af <- matrix(c(0.1,0.1,0.7) , nrow=1, ncol=3, byrow=T)
+# param.as <- matrix(c(0.1,0.1,0.5) , nrow=1, ncol=3, byrow=T)
+# param.sf <- matrix(c(0,0.0,0.1) , nrow=1, ncol=3, byrow=T)
+
+# # Trial 3
+# param.k <- matrix(c(0,1,1) , nrow=1, ncol=3, byrow=T)
+# param.Y <- matrix(c(0.25,0.35,0.35) , nrow=1, ncol=3, byrow=T)
+# param.af <- matrix(c(0.1,0.7,0.7) , nrow=1, ncol=3, byrow=T)
+# param.as <- matrix(c(0.1,0.5,0.5) , nrow=1, ncol=3, byrow=T)
+# param.sf <- matrix(c(0,0.1,0.1) , nrow=1, ncol=3, byrow=T)
 
 if (no.param > 1) {
   param.k <- rbind(param.k, c(-(param.k[3]-param.k[1])/nrow(data), 0, (param.k[3]-param.k[1])/nrow(data)))
-  param.Y <- rbind(matrix(c(0.28,0.3,0.32) , nrow=1, ncol=3, byrow=T), c(-(param.Y[3]-param.Y[1])/2/nrow(data), 0, (param.Y[3]-param.Y[1])/2/nrow(data)))
+  param.Y <- rbind(param.Y, c(-(param.Y[3]-param.Y[1])/2/nrow(data), 0, (param.Y[3]-param.Y[1])/2/nrow(data)))
   param.af <- rbind(param.af, c(-(param.af[3]-param.af[1])/nrow(data), 0, (param.af[3]-param.af[1])/nrow(data)))
   param.as <- rbind(param.as, c(-(param.as[3]-param.as[1])/2/nrow(data), 0, (param.as[3]-param.as[1])/2/nrow(data)))
   param.sf <- rbind(param.sf, c(-(param.sf[3]-param.sf[1])/nrow(data), 0, (param.sf[3]-param.sf[1])/nrow(data)))

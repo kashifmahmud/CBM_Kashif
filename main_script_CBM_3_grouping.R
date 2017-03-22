@@ -15,6 +15,9 @@
 # for best model selection) to select the best parameter set
 # Finally save the figures in Github/results folder
 ##############################
+# Set seed number to reproduce the results
+set.seed(1)
+
 # Set working directory for saving figures
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif")
 
@@ -31,20 +34,20 @@ source("Rfunctions/CBM_model_1.R")
 source("read_data_CBM.R")
 
 # Assign inputs for MCMC
-chainLength = 3500 # Setting the length of the Markov Chain to be generated
+chainLength = 3000 # Setting the length of the Markov Chain to be generated
 bunr_in = chainLength * 0.1 # Discard the first 10% iterations for Burn-IN in MCMC (According to Oijen, 2008)
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
 # vol = c(20) # test run
-no.param.par.var = c(3) # test run
+no.param.par.var = c(1,2,3) # test run
 GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
 vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
 
 # Setting up the grouping of similar treatments
 # vol_group <- list(c(1,2), c(3,4), c(5,6), 7)
-vol_group <- list(c(1,2),c(3,4,5,6),7)
+vol_group <- list(c(1,2),c(3,4),c(5,6),7) 
 
 param.mean = data.frame(matrix(ncol = no.var+1, nrow = length(no.param.par.var)*length(vol_group)))
 names(param.mean) = c("k","Y","af","as","ar","sf")
@@ -89,7 +92,9 @@ for (v1 in 1:length(vol_group)) {
     # Find the Prior probability density
     prior.dist = vector("list", no.var)
     for (i in 1:no.var) {
-      prior.dist[i] = list(log(dunif(pValues[ , i], pMinima[ , i], pMaxima[ , i])))
+      # prior.dist[i] = list(log(dunif(pValues[ , i], pMinima[ , i], pMaxima[ , i]))) # Prior uniform distribution
+      prior.dist[i] = list(log(dnorm(pValues[ , i], (pMinima[ , i] + pMaxima[ , i])/2, (pMaxima[ , i] - pMinima[ , i])/3))) # Prior normal gaussian distribution
+      # prior.dist[i] = list(log(dnorm(pValues[ , i], (pMinima[ , i] + pMaxima[ , i])/2, 1))) # Prior normal gaussian distribution
     }
     logPrior0 <- sum(unlist(prior.dist))
     
@@ -149,7 +154,9 @@ for (v1 in 1:length(vol_group)) {
       if (all(candidatepValues>pMinima) && all(candidatepValues<pMaxima)){
         uni.dist = vector("list", no.var)
         for (i in 1:no.var) {
-          uni.dist[i] = list(log(dunif(candidatepValues[ , i], pMinima[ , i], pMaxima[ , i])))
+          # uni.dist[i] = list(log(dunif(candidatepValues[ , i], pMinima[ , i], pMaxima[ , i]))) # Prior uniform distribution
+          uni.dist[i] = list(log(dnorm(candidatepValues[ , i], (pMinima[ , i] + pMaxima[ , i])/2, (pMaxima[ , i] - pMinima[ , i])/3))) # Prior normal gaussian distribution
+          # uni.dist[i] = list(log(dnorm(candidatepValues[ , i], (pMinima[ , i] + pMaxima[ , i])/2, 1))) # Prior normal gaussian distribution
         }
         logPrior1 <- sum(unlist(uni.dist))
         Prior1 = 1
@@ -204,9 +211,9 @@ for (v1 in 1:length(vol_group)) {
         # Calculating the logarithm of the Metropolis ratio
         logalpha <- (logPrior1+logL1) - (logPrior0+logL0) 
         # Accepting or rejecting the candidate vector
-        if ( log(runif(1, min = 0, max =1)) < logalpha ) {
-          # if ( log(runif(1, min = 0, max =1)) < logalpha && candidatepValues$af + candidatepValues$as <= 1 
-          #      && candidatepValues$as >= 0 && candidatepValues$af >= 0) {
+        # if ( log(runif(1, min = 0, max =1)) < logalpha ) {
+          if ( log(runif(1, min = 0, max =1)) < logalpha && candidatepValues$af[1] + candidatepValues$as[1] <= 1
+               && candidatepValues$as[1] >= 0 && candidatepValues$af[1] >= 0) {
           # && param.k[3] <= candidatepValues$k <= param.k[1,1] && param.Y[3] <= candidatepValues$Y <= param.Y[1] ) {
           pValues <- candidatepValues
           logPrior0 <- logPrior1
@@ -445,9 +452,17 @@ for (v1 in 1:length(vol_group)) {
         param.daily[i,] = param.final[1,]
       }
     }
+    # if (no.param == 2) {
+    #   for (i in 2:length(Days)) {
+    #     param.daily[i,] = param.final[1,] + param.final[2,] * i
+    #   }
+    # }
     if (no.param == 2) {
       for (i in 2:length(Days)) {
-        param.daily[i,] = param.final[1,] + param.final[2,] * i
+        param.daily[i,1:no.var] = param.final[1,1:no.var] + param.final[2,1:no.var] * i
+      }
+      for (i in (no.var+1):(2*no.var)) {
+        param.daily[,i] = ((param.final[1,i]^2 + param.final[2,i]^2)/2)^0.5
       }
     }
     # if (no.param == 3) {
@@ -459,11 +474,10 @@ for (v1 in 1:length(vol_group)) {
       for (i in 2:length(Days)) {
         param.daily[i,1:no.var] = param.final[1,1:no.var] + param.final[2,1:no.var] * i + param.final[3,1:no.var] * i^2
       }
+      for (i in (no.var+1):(2*no.var)) {
+        param.daily[,i] = ((param.final[1,i]^2 + param.final[2,i]^2 + param.final[3,i]^2)/3)^0.5
+      }
     }
-    for (i in (no.var+1):(2*no.var)) {
-      param.daily[,i] = ((param.final[1,i]^2 + param.final[2,i]^2 + param.final[3,i]^2)/3)^0.5
-    }
-    
     param.daily$ar = 1 - param.daily$af - param.daily$as
     param.daily$ar_SD = with(param.daily, ((af_SD*af_SD + as_SD*as_SD)/2)^0.5)
     param.daily$Date = as.Date(data.set$Date)
@@ -499,7 +513,7 @@ for (v1 in 1:length(vol_group)) {
     names(melted.param) = c("Date","variable","Parameter","Parameter_SD")
     melted.param$Date = as.Date(melted.param$Date)
     # melted.param$volume = vol[v[1]]
-    melted.param$volume = list(vol[unlist(vol_group[q])])
+    melted.param$volume = list(vol[unlist(vol_group[v1])])
     melted.param$volume.group = as.factor(v1)
     melted.param$no.param = as.factor(no.param.par.var[z])
     
@@ -706,11 +720,17 @@ for (v1 in 1:length(vol_group)) {
     aic.bic$volume[q] = list(vol[unlist(vol_group[q])])
   }
 }
-write.csv(summary.param[,c("Date","variable","Parameter","volume.group")], file = "output/processeddata/summary.param.csv", row.names = FALSE)
+# bic = aic.bic[,c("bic","volume.group","volume")]
+# obs.l = sapply(bic$volume,length)
+# bic.final = data.frame(bic=rep(bic$bic,obs.l), volume.group=rep(bic$volume.group,obs.l), volume=as.factor(unlist(bic$volume)))
+# bic.final$volume.group = rep(1:(nrow(bic.final)/length(vol)), each=length(vol))
+# write.csv(bic.final, file = "output/processeddata/bic.final_2.csv", row.names = FALSE)
+# write.csv(summary.param[,c("Date","variable","Parameter","volume.group")], file = "output/processeddata/summary.param.csv", row.names = FALSE)
 
 # names(aic.bic) <- c("logLi","aic","bic","time","volume","no.param")
 # write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.names = FALSE)
 melted.aic.bic = melt(aic.bic[,c(1:6)], id.vars=c("no.param","volume.group"))
+# write.csv(melted.aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.names = FALSE)
 
 # write.csv(param.sf.mean, file = "output/processeddata/param.sf.mean.csv", row.names = FALSE)
 # plot(param.daily$sf,type='l',col="red",main="Leaf turnover, sf",xlab="Days")

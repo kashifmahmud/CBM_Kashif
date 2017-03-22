@@ -12,7 +12,7 @@ setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary/Cpo
 meas = as.factor(c("Mleaf","Mstem","Mroot","Sleaf"))
 res = as.factor(c("Mleaf.modelled","Mstem.modelled","Mroot.modelled","Sleaf.modelled"))
 error = as.factor(c("Mleaf_SD","Mstem_SD","Mroot_SD","Sleaf_SD"))
-pd <- position_dodge(3) # move the overlapped errorbars horizontally
+pd <- position_dodge(2) # move the overlapped errorbars horizontally
 for (p in 1:length(meas)) {
   summary.data.Cpool = subset(summary.data,variable==meas[p])
   summary.output.Cpool = subset(summary.output,variable==res[p])
@@ -20,13 +20,14 @@ for (p in 1:length(meas)) {
   # summary.error.Cpool$parameter = summary.data.Cpool$value
   
   p3 = ggplot(summary.error.Cpool, aes(x=Date, y=parameter, group = volume, colour=volume)) + 
-    geom_point() +
-    geom_errorbar(aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=3) +
+    geom_point(position=pd) +
+    geom_errorbar(position=pd,aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=2) +
     geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,no.param), linetype=no.param, colour=volume)) + 
-    ylab(as.character(meas[p])) +
+    ylab(paste(as.character(meas[p]),"(g C) in log scale")) +
     ggtitle("C pools - Measured (points) vs Modelled (lines) with storage") +
     labs(colour="Soil Volume", linetype="Total No of Parameter", shape="Total No of Parameter") +
     theme_bw() +
+    scale_y_log10() +
     theme(plot.title = element_text(size = 12, face = "bold")) +
     theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
     theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
@@ -130,6 +131,23 @@ p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interact
   theme(axis.title.y = element_text(size = 12, vjust=0.3))
 p7
 ggsave(p7,filename=paste("LogLi_aic_bic_time_with_storage.png"))
+
+# # Plot Model Measures ("logLi","aic","bic","time") against "volume" and "Total No of param"
+# pd <- position_dodge(0)
+# p8 = ggplot(data = aic.bic[c("bic","no.param","volume")], aes(x = no.param, y = bic, group = volume, colour=factor(volume))) +
+#   geom_line() +
+#   geom_point(position=pd, size=2) +
+#   xlab("Number of parameter") +
+#   ylab("BIC") +
+#   ggtitle("BIC for various models") +
+#   labs(colour="Soil volume") +
+#   theme_bw() +
+#   theme(plot.title = element_text(size = 12, face = "bold")) +
+#   theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+#   theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+#   theme(axis.title.y = element_text(size = 12, vjust=0.3))
+# p8
+# ggsave(p8,filename=paste("bic_with_storage.png"))
 
 plots7 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
   img <- as.raster(readPNG(x))

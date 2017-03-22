@@ -232,7 +232,7 @@ for(i in 1:length(vols)) {
   end.data.idn = subset(end.data,volume==vols[i]) 
   end.data.idn[nrow(end.data.idn)+1, 2:ncol(end.data.idn)] = colMeans(end.data.idn[2:ncol(end.data.idn)], na.rm = TRUE) # R7 = Average of leaf data
   end.data.idn[nrow(end.data.idn)+1, 2:ncol(end.data.idn)] = (apply(end.data.idn[2:ncol(end.data.idn)], 2, sd, na.rm = TRUE))/(nrow(end.data.idn)-1)^0.5 # R8 = Standard error
-  # end.data.idn[nrow(end.data.idn)+1, 2:ncol(end.data.idn)] = apply(end.data.idn[2:ncol(end.data.idn)], 2, sd, na.rm = TRUE) # R8 = Standard deviation of leaf counts
+  # end.data.idn[nrow(end.data.idn)+1, 2:ncol(end.data.idn)] = apply(end.data.idn[2:ncol(end.data.idn)], 2, sd, na.rm = TRUE) # R8 = Standard deviation
   end.data.idn$volume = end.data.idn$volume[1]
   dimnames(end.data.idn)[[1]] <- c(1:(nrow(end.data.idn)-2), "Mean", "SE")
   if (i == 1) {
@@ -274,7 +274,7 @@ for(i in 1:length(vols)) {
     stemmass.idn.date = subset(stemmass.idn, Date == unique(stemmass.idn$Date)[j])
     stemmass.idn.date[nrow(stemmass.idn.date)+1, 2:ncol(stemmass.idn.date)] = colMeans(stemmass.idn.date[2:ncol(stemmass.idn.date)], na.rm = TRUE) # R7 = Average of leaf data
     stemmass.idn.date[nrow(stemmass.idn.date)+1, 2:ncol(stemmass.idn.date)] = (apply(stemmass.idn.date[2:ncol(stemmass.idn.date)], 2, sd, na.rm = TRUE))/(nrow(stemmass.idn.date)-1)^0.5 # R8 = Standard error
-    # stemmass.idn.date[nrow(stemmass.idn.date)+1, 2:ncol(stemmass.idn.date)] = apply(stemmass.idn.date[2:ncol(stemmass.idn.date)], 2, sd, na.rm = TRUE) # R8 = Standard deviation of leaf counts
+    # stemmass.idn.date[nrow(stemmass.idn.date)+1, 2:ncol(stemmass.idn.date)] = apply(stemmass.idn.date[2:ncol(stemmass.idn.date)], 2, sd, na.rm = TRUE) # R8 = Standard deviation
     stemmass.idn.date$Date = stemmass.idn.date$Date[1]
     dimnames(stemmass.idn.date)[[1]] <- c(1:(nrow(stemmass.idn.date)-2), "Mean", "SE")
     if (i == 1 && j == 1) {
@@ -446,6 +446,7 @@ for(i in length(vols):1) {
 }
 lm.daily.m$Date = as.Date(lm.daily.m$Date)
 lm.daily.gas = lm.daily.m[lm.daily.m$Date %in% as.Date(c(unique(tnc.final$Date))), ]
+# write.csv(lm.daily.gas, file = "rawdata/leafmass_tnc_data.csv", row.names = FALSE)
 tnc.final$tnc = tnc.final$tnc * lm.daily.gas$leafmass / 1000 # Unit = g plant-1
 tnc.final$tnc_SE = tnc.final$tnc_SE * lm.daily.gas$leafmass / 1000 # Unit = g plant-1
 write.csv(tnc.final, file = "rawdata/tnc_fortnightly_data.csv", row.names = FALSE)

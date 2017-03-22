@@ -1,4 +1,6 @@
-# R code to import and process Asat data, and then check the photosynthesis variation over time
+# R code to import and process Asat data, and then plot the GPP, Asat, N content, TNC, Starch content variation over time
+# Plot weekly cumulative GPP and Leaf mass for various treatments
+
 rm(list=ls())
 
 vols = c(5,10,15,20,25,35,1000)
@@ -60,6 +62,44 @@ tnc.final$volume = as.numeric(tnc.final$volume)
 # data = merge(Asat.final,tnc.final,by=c("Date","volume"))
 # data = merge(data,nc.final,by=c("Date","volume"))
 
+################### Find plant starch content (fortnightly data) for corresponding Dates (from Court's leaf_data file: represents Gas measurement campaign)
+leaf.data <- read.csv("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/rawdata/leaf_data.csv")
+leaf.data$Date = as.Date(leaf.data$Date, format = "%d/%m/%Y")
+keeps <- c("Date", "volume", "starch_mgperg")
+starch.gas = leaf.data[ , keeps, drop = FALSE]
+names(starch.gas)[1:3] <- c("Date", "volume", "starch")
+starch.gas$Date = as.Date(starch.gas$Date)
+starch.gas$volume = as.numeric(starch.gas$volume)
+
+for(i in 1:length(vols)) {
+  starch.idn = subset(starch.gas,volume==vols[i]) 
+  for(j in 1:length(unique(starch.idn$Date))) {
+    starch.idn.date = subset(starch.idn, Date == unique(starch.idn$Date)[j])
+    starch.idn.date[nrow(starch.idn.date)+1, 2:ncol(starch.idn.date)] = colMeans(starch.idn.date[2:ncol(starch.idn.date)], na.rm = TRUE) # R7 = Average of starch
+    starch.idn.date[nrow(starch.idn.date)+1, 2:ncol(starch.idn.date)] = (apply(starch.idn.date[2:ncol(starch.idn.date)], 2, sd))/(nrow(starch.idn.date)-1)^0.5 # R8 = Standard error of starch
+    starch.idn.date$Date = starch.idn.date[1,1]
+    dimnames(starch.idn.date)[[1]] <- c(1:(nrow(starch.idn.date)-2), "Mean", "SE")
+    if (i == 1 && j == 1) {
+      starch.final <- starch.idn.date[0,]
+    }
+    starch.final[j+(i-1)*length(unique(starch.idn$Date)), ] <- starch.idn.date["Mean", ]
+    starch.final$starch_SE[j+(i-1)*length(unique(starch.idn$Date))] <- starch.idn.date["SE", 3]
+  }
+}
+# Unit conversion from (mg g-1leaf) to  (g plant-1)
+leafmass.data <- read.csv("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/rawdata/leafmass_tnc_data.csv")
+leafmass.data$volume = as.numeric(leafmass.data$volume)
+leafmass.data$Date = as.Date(leafmass.data$Date)
+starch.final = merge(starch.final,leafmass.data, by=c("Date","volume"))
+starch.final$starch = starch.final$starch * starch.final$leafmass / 1000 # Unit = g plant-1
+starch.final$starch_SE = starch.final$starch_SE * starch.final$leafmass / 1000 # Unit = g plant-1
+# write.csv(starch.final, file = "rawdata/starch_fortnightly_data.csv", row.names = FALSE)
+
+# Import and process the GPP data
+GPP.data <- read.csv("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/rawdata/GPP.csv")
+GPP.data$Date = as.Date(GPP.data$Date)
+GPP.final = GPP.data[GPP.data$Date %in% as.Date(c(unique(starch.final$Date))), ]
+
 
 # plot Asat for various treatments over time
 png(file = paste("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Asat_over_time.png"))
@@ -71,6 +111,19 @@ for (i in 1:length(vols)) {
   abline(lm(Asat ~ Date, data = Asat.set))
 }
 title(main = paste("Asat for different treatments"), outer=TRUE, cex = 1.5)
+dev.off()
+
+
+# plot GPP for various treatments over time
+png(file = paste("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/GPP_over_time.png"))
+par(mfrow=c(3,3),oma = c(0, 0, 2, 0))
+for (i in 1:length(vols)) {
+  GPP.set = subset(GPP.final,(volume %in% vols[i]))
+  plot(GPP.set$Date, GPP.set$tdc_gross, main=paste("GPP for volume",vols[i]), 
+       ylim=c(min(GPP.final$tdc_gross), max(GPP.final$tdc_gross)), xlab="Days", ylab="GPP (g C plant-1)")
+  abline(lm(tdc_gross ~ Date, data = GPP.set))
+}
+title(main = paste("GPP for different treatments"), outer=TRUE, cex = 1.5)
 dev.off()
 
 
@@ -87,7 +140,20 @@ title(main = paste("TNC for different treatments"), outer=TRUE, cex = 1.5)
 dev.off()
 
 
-# plot Asat for various treatments over time
+# plot Starch for various treatments over time
+png(file = paste("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/Starch_over_time.png"))
+par(mfrow=c(3,3),oma = c(0, 0, 2, 0))
+for (i in 1:length(vols)) {
+  starch.set = subset(starch.final,(volume %in% vols[i]))
+  plot(starch.set$Date, starch.set$starch, main=paste("Starch for volume",vols[i]), 
+       ylim=c(min(starch.final$starch), max(starch.final$starch)), xlab="Days", ylab="Starch (g plant-1)")
+  abline(lm(starch ~ Date, data = starch.set))
+}
+title(main = paste("Starch for different treatments"), outer=TRUE, cex = 1.5)
+dev.off()
+
+
+# plot N content for various treatments over time
 png(file = paste("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/N_content_over_time.png"))
 par(mfrow=c(3,3),oma = c(0, 0, 2, 0))
 for (i in 1:length(vols)) {
@@ -100,9 +166,11 @@ title(main = paste("N content for different treatments"), outer=TRUE, cex = 1.5)
 dev.off()
 
 ###################################
-# Import daily GPP and weekly Cleaf data
+# Import daily GPP, Rd and weekly Cleaf data
 GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
+# Rd.data.raw = read.csv("rawdata/Rd.csv") # Units g C g-1 plant d-1
 names(GPP.data.raw) = c("Date", "volume", "gpp")
+# GPP.data.raw = merge(GPP.data.raw,Rd.data.raw,by=c("Date","volume"))
 GPP.data.raw$Date = as.Date(GPP.data.raw$Date)
 Mleaf.data.raw = read.csv("rawdata/Cleaf_weekly_data.csv") # Units gC d-1
 Mleaf.data.raw = Mleaf.data.raw[with(Mleaf.data.raw, order(Date)), ]
@@ -124,6 +192,7 @@ for(i in 1:length(vols)) {
 Mleaf.data.idn$Date = as.Date(Mleaf.data.idn$Date)
 GPP.data.raw$Date = as.Date(GPP.data.raw$Date)
 # Calculate weekly accumulated GPP for all treatments
+GPP.idn.set = GPP.idn[1,]
 for(i in 1:length(vols)) {
   GPP.idn = subset(GPP.data.raw,volume==vols[i]) 
   GPP.idn = GPP.idn[with(GPP.idn, order(Date)), ]

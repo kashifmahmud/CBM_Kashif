@@ -6,47 +6,6 @@
 ##############################
 
 # Set working directory for saving figures
-setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary/Cpools")
-
-# Plot modelled vs measured data ("Mleaf","Mstem","Mroot","Sleaf") against "volume" and "Total No of param"
-meas = as.factor(c("Mleaf","Mstem","Mroot","Sleaf"))
-res = as.factor(c("Mleaf.modelled","Mstem.modelled","Mroot.modelled","Sleaf.modelled"))
-error = as.factor(c("Mleaf_SD","Mstem_SD","Mroot_SD","Sleaf_SD"))
-pd <- position_dodge(3) # move the overlapped errorbars horizontally
-for (p in 1:length(meas)) {
-  summary.data.Cpool = subset(summary.data,variable==meas[p])
-  summary.output.Cpool = subset(summary.output,variable==res[p])
-  summary.error.Cpool = subset(summary.error,variable==error[p])
-  # summary.error.Cpool$parameter = summary.data.Cpool$value
-  
-  p3 = ggplot(summary.error.Cpool, aes(x=Date, y=parameter, group = volume, colour=volume)) + 
-    geom_point() +
-    geom_errorbar(aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=3) +
-    geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,volume.group,no.param), linetype=volume.group, colour=volume, size=no.param)) + 
-    ylab(as.character(meas[p])) +
-    ggtitle("C pools - Measured (points) vs Modelled (lines)") +
-    labs(colour="Soil Volume", linetype="Grouping treatment", size="Total No of Parameter") +
-    # scale_color_manual(labels = c("Individuals", "One Group"), values = c("blue", "red")) +
-    theme_bw() +
-    annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)-mean(summary.param.set.limit$Parameter_SD), size = 3,
-             label = paste("Grouping treatment 1 = Individual parameter sets for different treatments",
-                           "\nGrouping treatment 2 = One single parameter set for all treatments",
-                           "\nChain length = ", chainLength-bunr_in)) +
-    theme(plot.title = element_text(size = 12, face = "bold")) +
-    theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
-    theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
-    theme(axis.title.y = element_text(size = 12, vjust=0.3))
-  p3
-  ggsave(p3,filename=paste(meas[p],"_Measured_vs_Modelled.png",sep=""))
-}
-plots5 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
-  img <- as.raster(readPNG(x))
-  rasterGrob(img, interpolate = FALSE)
-})
-ggsave("Summary_Cpools_multipage.pdf", marrangeGrob(grobs=plots5, nrow=2, ncol=2))
-
-
-# Set working directory for saving figures
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary/AF")
 
 # Plot individual modelled parameters ("k","Y","af","as","ar","sf") against "volume" and "Total No of param"
@@ -73,10 +32,10 @@ for (p in 1:length(var)) {
                              "\nGroup 2 = Volume: ", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
                              "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
                              "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
-                             "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
-                             "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
-                             "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
-                             "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
+                             # "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
+                             # "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
+                             # "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
+                             # "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
                              "\nChain length = ", chainLength-bunr_in)) +
       theme_bw() +
       theme(plot.title = element_text(size = 12, face = "bold")) +
@@ -95,11 +54,56 @@ ggsave("Summary_AF_multipage.pdf", marrangeGrob(grobs=plots6, nrow=2, ncol=lengt
 
 
 # Set working directory for saving figures
+setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary/Cpools")
+
+# Plot modelled vs measured data ("Mleaf","Mstem","Mroot","Sleaf") against "volume" and "Total No of param"
+meas = as.factor(c("Mleaf","Mstem","Mroot","Sleaf"))
+res = as.factor(c("Mleaf.modelled","Mstem.modelled","Mroot.modelled","Sleaf.modelled"))
+error = as.factor(c("Mleaf_SD","Mstem_SD","Mroot_SD","Sleaf_SD"))
+pd <- position_dodge(2) # move the overlapped errorbars horizontally
+for (p in 1:length(meas)) {
+  summary.data.Cpool = subset(summary.data,variable==meas[p])
+  summary.output.Cpool = subset(summary.output,variable==res[p])
+  summary.error.Cpool = subset(summary.error,variable==error[p])
+  # summary.error.Cpool$parameter = summary.data.Cpool$value
+  
+  p3 = ggplot(summary.error.Cpool, aes(x=Date, y=parameter, group = volume, colour=volume)) + 
+    geom_point(position=pd) +
+    geom_errorbar(position=pd,aes(ymin=parameter-value, ymax=parameter+value), colour="grey", width=2) +
+    # geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,volume.group,no.param), linetype=volume.group, colour=volume, size=no.param)) + 
+    geom_line(position=pd,data = summary.output.Cpool, aes(x = Date, y = value, group = interaction(volume,no.param), linetype=no.param, colour=volume)) + 
+    ylab(paste(as.character(meas[p]),"(g C) in log scale")) +
+    ggtitle("C pools - Measured (points) vs Modelled (lines)") +
+    labs(colour="Soil Volume", linetype="No. of Parameters") +
+    # labs(colour="Soil Volume", linetype="Grouping treatment", size="Total No of Parameter") +
+    # scale_color_manual(labels = c("Individuals", "One Group"), values = c("blue", "red")) +
+    theme_bw() +
+    # annotate("text", x = mean(summary.param.set.limit$Date), y = min(summary.param.set.limit$Parameter)-mean(summary.param.set.limit$Parameter_SD), size = 3,
+             # label = paste("Grouping treatment 1 = Individual parameter sets for different treatments",
+             #               "\nGrouping treatment 2 = One single parameter set for all treatments",
+             #               "\nChain length = ", chainLength-bunr_in)) +
+    scale_y_log10() +
+    theme(plot.title = element_text(size = 12, face = "bold")) +
+    theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+    theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+    theme(axis.title.y = element_text(size = 12, vjust=0.3))
+  p3
+  ggsave(p3,filename=paste(meas[p],"_Measured_vs_Modelled.png",sep=""))
+}
+plots5 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
+  img <- as.raster(readPNG(x))
+  rasterGrob(img, interpolate = FALSE)
+})
+ggsave("Summary_Cpools_multipage.pdf", marrangeGrob(grobs=plots5, nrow=2, ncol=2))
+
+
+# Set working directory for saving figures
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/figures/summary")
 
 # Plot modelled Cstorage against "volume" and "Total No of param"
 p5 = ggplot() +
-  geom_line(data = summary.Cstorage, aes(x = Date, y = Cstorage.modelled, group = interaction(volume,volume.group),colour=volume, linetype=volume.group)) + 
+  # geom_line(data = summary.Cstorage, aes(x = Date, y = Cstorage.modelled, group = interaction(volume,volume.group),colour=volume, linetype=volume.group)) + 
+  geom_line(data = summary.Cstorage, aes(x = Date, y = Cstorage.modelled, group = interaction(volume,no.param),colour=volume, linetype=no.param)) + 
   ylab("Cstorage (gC)") +
   ggtitle("Modelled Cstorage") +
   labs(colour="Soil Volume", linetype="Total No of Parameter") +
@@ -143,10 +147,10 @@ p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interact
                          "\nGroup 2 = Volume: ", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
                          "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
                          "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
-                         "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
-                         "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
-                         "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
-                         "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
+                         # "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
+                         # "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
+                         # "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
+                         # "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
                          "\nChain length = ", chainLength-bunr_in)) +
   theme_bw() +
   theme(plot.title = element_text(size = 12, face = "bold")) +
@@ -155,6 +159,62 @@ p7 = ggplot(data = melted.aic.bic, aes(x = variable, y = value, group = interact
   theme(axis.title.y = element_text(size = 12, vjust=0.3))
 p7
 ggsave(p7,filename=paste("LogLi_aic_bic_time.png"))
+
+# # Plot Model Measures ("logLi","aic","bic","time") against "volume" and "Total No of param"
+# pd <- position_dodge(0)
+# p8 = ggplot(data = aic.bic[c("bic","no.param","volume")], aes(x = no.param, y = bic, group = volume, colour=factor(volume))) +
+#   geom_line() +
+#   geom_point(position=pd, size=2) +
+#   xlab("Model Measures") +
+#   ylab("BIC") +
+#   ggtitle("BIC for various models") +
+#   labs(colour="No. of Parameter") +
+#   annotate("text", x = mean(melted.aic.bic$no.param), y = min(aic.bic$bic), size = 3,
+#            label = paste("Group 1 = Volume: ", subset(summary.param.set.limit, volume.group==1)[1,5], "L", 
+#                          "\nGroup 2 = Volume: ", subset(summary.param.set.limit, volume.group==2)[1,5], "L",
+#                          # "\nGroup 3 = Volume: ", subset(summary.param.set.limit, volume.group==3)[1,5], "L",
+#                          # "\nGroup 4 = Volume: ", subset(summary.param.set.limit, volume.group==4)[1,5], "L",
+#                          # "\nGroup 5 = Volume: ", subset(summary.param.set.limit, volume.group==5)[1,5], "L",
+#                          # "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
+#                          # "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
+#                          # "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
+#                          "\nChain length = ", chainLength-bunr_in)) +
+#   theme_bw() +
+#   theme(plot.title = element_text(size = 12, face = "bold")) +
+#   theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+#   theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+#   theme(axis.title.y = element_text(size = 12, vjust=0.3))
+# p8
+# ggsave(p8,filename=paste("bic_with_storage.png"))
+
+# # Plot Model Measures ("bic") against "volume.group" and "volume"
+# bic.final = read.csv("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif/output/processeddata/bic.final.csv")
+# bic.final$volume = as.factor(bic.final$volume)
+# pd <- position_dodge(0.4)
+# p9 = ggplot(data = bic.final, aes(x = volume, y = bic, group = volume.group, colour=factor(volume.group))) +
+#   # geom_line() +
+#   geom_point(position=pd, size=2) +
+#   xlab("Pot volume (L)") +
+#   ylab("BIC") +
+#   ggtitle("BIC for various parameter settings") +
+#   labs(colour="Volume group") +
+#   annotate("text", x = bic.final$volume[4], y = max(bic.final$bic)-400, size = 3,
+#            label = paste("Group 1 = c(5,10,15,20,25,35,1000L)",
+#                          "\nGroup 2 = c(5,10,15,20,25,35L) and 1000L",
+#                          "\nGroup 3 = c(5,10L), c(15,20,25,35L) and 1000L",
+#                          "\nGroup 4 = c(5,10L), c(15,20L), c(25,35L) and 1000L",
+#                          "\nGroup 5 = Individual treatment parameters",
+#                          # "\nGroup 6 = Volume: ", subset(summary.param.set.limit, volume.group==6)[1,5], "L",
+#                          # "\nGroup 7 = Volume: ", subset(summary.param.set.limit, volume.group==7)[1,5], "L",
+#                          # "\nGroup 8 = Volume: ", subset(summary.param.set.limit, volume.group==8)[1,5], "L",
+#                          "\nChain length = ", chainLength-bunr_in)) +
+#   theme_bw() +
+#   theme(plot.title = element_text(size = 12, face = "bold")) +
+#   theme(legend.title = element_text(colour="chocolate", size=12, face="bold")) +
+#   theme(axis.title.x = element_text(size = 12, vjust=-.2)) +
+#   theme(axis.title.y = element_text(size = 12, vjust=0.3))
+# p9
+# # ggsave(p9,filename=paste("bic_with_storage.png"))
 
 plots7 <- lapply(ll <- list.files(patt='.*[.]png'),function(x){
   img <- as.raster(readPNG(x))

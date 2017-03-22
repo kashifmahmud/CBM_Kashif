@@ -13,6 +13,9 @@
 # for best model selection) to select the best parameter set
 # Finally save the figures in Github/results folder
 ##############################
+# Set seed number to reproduce the results
+set.seed(1)
+
 # Set working directory for saving figures
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif")
 
@@ -29,13 +32,13 @@ source("Rfunctions/CBM_model.R")
 source("read_data_CBM.R")
 
 # Assign inputs for MCMC
-chainLength = 2500 # Setting the length of the Markov Chain to be generated
+chainLength = 3500 # Setting the length of the Markov Chain to be generated
 bunr_in = chainLength * 0.1 # Discard the first 10% iterations for Burn-IN in MCMC (According to Oijen, 2008)
 no.var = 5 # variables to be modelled are: k,Y,af,as,sf
 
 # Assign pot volumes and number of parameters per varible in temporal scale
 # vol = c(5) # test run
-no.param.par.var = c(3) # test run
+no.param.par.var = c(1,2,3) # test run
 GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
 vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
@@ -50,6 +53,7 @@ time = data.frame(no.param=rep(no.param.par.var,length(vol)),
 q = 0 # Indicates the iteration number
 
 
+# z=1; v=1
 for (z in 1:length(no.param.par.var)) {
   for (v in 1:length(vol)) {
     # This script process the raw data
@@ -92,6 +96,7 @@ for (z in 1:length(no.param.par.var)) {
     prior.dist = vector("list", no.var)
     for (i in 1:no.var) {
       prior.dist[i] = list(log(dunif(pValues[ , i], pMinima[ , i], pMaxima[ , i])))
+      # prior.dist[i] = list(log(dnorm(pValues[ , i], (pMinima[ , i] + pMaxima[ , i])/2, (pMaxima[ , i] - pMinima[ , i])/4))) # Prior normal gaussian distribution
     }
     logPrior0 <- sum(unlist(prior.dist))
     

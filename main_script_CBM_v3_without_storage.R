@@ -15,6 +15,9 @@
 # for best model selection) to select the best parameter set
 # Finally save the figures in Github/results folder
 ##############################
+# Set seed number to reproduce the results
+set.seed(1)
+
 # Set working directory for saving figures
 setwd("/Users/kashifmahmud/WSU/ARC_project/CBM_Kashif")
 
@@ -31,13 +34,13 @@ source("Rfunctions/CBM_model_v3_without_storage.R")
 source("read_data_CBM.R")
 
 # Assign inputs for MCMC
-chainLength = 3500 # Setting the length of the Markov Chain to be generated
+chainLength = 3000 # Setting the length of the Markov Chain to be generated
 bunr_in = chainLength * 0.1 # Discard the first 10% iterations for Burn-IN in MCMC (According to Oijen, 2008)
 no.var = 4 # variables to be modelled are: Y,af,as,sf (without storage pool, so no "k")
 
 # Assign pot volumes and number of parameters per varible in temporal scale
 # vol = c(20) # test run
-no.param.par.var = c(3) # test run
+no.param.par.var = c(1) # test run
 GPP.data.raw = read.csv("rawdata/GPP.csv") # Units gC d-1
 vol = unique(GPP.data.raw$volume)[order(unique(GPP.data.raw$volume))] # Assign all treatment pot volumes
 # no.param.par.var = c(1,2,3,4,5,6,9) # temporal parameter count per variable
@@ -480,7 +483,7 @@ for (v in 1:length(vol)) {
 }
 
 names(aic.bic) <- c("logLi","aic","bic","time","volume","no.param")
-write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time.csv", row.names = FALSE)
+write.csv(aic.bic, file = "output/processeddata/logli_aic_bic_time_without_storage.csv", row.names = FALSE)
 melted.aic.bic = melt(aic.bic, id.vars=c("no.param","volume"))
 
 # write.csv(param.sf.mean, file = "output/processeddata/param.sf.mean.csv", row.names = FALSE)
